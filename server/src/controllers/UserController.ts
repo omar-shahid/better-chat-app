@@ -14,7 +14,7 @@ import {
 class UserController {
   public async register(req: ExpressRequest<registerInputType>, res: Response) {
     const input = req.body;
-    if (!input) return res.json({ errors: ["Provide input"] });
+    if (!input) return res.status(400).json({ errors: ["Provide input"] });
     try {
       await registerInputValidator.validate(input, { abortEarly: false });
       const hashedPass = await argon2.hash(input.password);
@@ -29,14 +29,14 @@ class UserController {
       });
     } catch (e) {
       if (e.errors)
-        return res.json({
+        return res.status(422).json({
           errors: e.errors,
         });
       else if (e.code === 11000)
-        return res.json({ errors: ["Email already exists."] });
+        return res.status(409).json({ errors: ["Email already exists."] });
       else {
         console.log(e);
-        return res.json({ errors: ["Internal Server Error"] });
+        return res.status(500).json({ errors: ["Internal Server Error"] });
       }
     }
   }
@@ -46,21 +46,22 @@ class UserController {
     try {
       await loginInputValidator.validate(input, { abortEarly: false });
       const user = await User.findOne({ email: input.email });
-      if (!user) return res.json({ errors: ["Invalid email or password"] });
+      if (!user)
+        return res.status(422).json({ errors: ["Invalid email or password"] });
       if (!(await argon2.verify(user.password, input.password)))
-        return res.json({ errors: ["Invalid email or password"] });
+        return res.status(422).json({ errors: ["Invalid email or password"] });
       req.session.uid = user.id;
       return res.json({
         success: true,
       });
     } catch (e) {
       if (e.errors)
-        return res.json({
+        return res.status(422).json({
           errors: e.errors,
         });
       else {
         console.log(e);
-        return res.json({ errors: ["Internal Server Error"] });
+        return res.status(500).json({ errors: ["Internal Server Error"] });
       }
     }
   }
