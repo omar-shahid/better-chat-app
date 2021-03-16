@@ -4,8 +4,34 @@ import { Server, Socket } from "socket.io";
 import UserEvents from "./events/User";
 import { EventClassConstructor } from "./types";
 import userRoutes from "./routes/userRoutes";
+import mongoose from "mongoose";
+import session from "express-session";
+import MongoStore from "connect-mongo";
+
+const MONGODB_URL = "mongodb://localhost:27017/better-chat-app";
+mongoose.connect(MONGODB_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 const app = express();
+app.use(
+  session({
+    secret: "TEST",
+    name: "uid",
+    saveUninitialized: false,
+    resave: false,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 3, // 3 days
+      sameSite: "lax",
+      secure: false,
+      httpOnly: true,
+    },
+    store: MongoStore.create({
+      mongoUrl: MONGODB_URL,
+    }),
+  })
+);
 app.use((_, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -14,6 +40,7 @@ app.use((_, res, next) => {
   );
   next();
 });
+app.use(express.json());
 app.get("/", (_, res) => {
   res.send("Working");
 });
