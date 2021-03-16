@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import MainLayout from "../layouts/Main";
 
 interface Props {}
 
@@ -14,7 +15,9 @@ const Home: React.FC<Props> = () => {
   }, []);
   return (
     <>
-      <h1>Hello World</h1> <p className="italic text-gray-500">{message}</p>
+      <MainLayout title="home">
+        <h1>Hello World</h1> <p className="italic text-gray-500">{message}</p>
+      </MainLayout>
     </>
   );
 };
