@@ -1,10 +1,11 @@
 import MainLayout from "../layouts/Main";
 import { Formik, Field, Form } from "formik";
 import { api } from "../api";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useMutation } from "react-query";
 import { FormValidationMessages } from "../components/FormValidationMessages";
 import { useNavigate } from "react-router";
+import { UserContext } from "../contexts/user";
 
 interface Props {}
 
@@ -12,6 +13,7 @@ const LoginPage: React.FC<Props> = () => {
   const [errors, setErrors] = useState<string[]>([]);
   const login = useMutation(api.user.login);
   const navigate = useNavigate();
+  const [, setUser] = useContext(UserContext)!;
 
   return (
     <MainLayout title="Register | Chat App">
@@ -35,7 +37,10 @@ const LoginPage: React.FC<Props> = () => {
             onSubmit={(values) =>
               login
                 .mutateAsync(values)
-                .then(() => navigate("/chat"))
+                .then(() => {
+                  setUser(true);
+                  navigate("/dashboard");
+                })
                 .catch((e) => setErrors(e.response.data.errors as string[]))
             }
           >

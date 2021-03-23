@@ -1,7 +1,7 @@
-declare namespace Express {
-  export interface Request {
-    session: {
-      uid: string;
-    };
+import "express-session";
+
+declare module "express-session" {
+  interface SessionData {
+    qid: string;
   }
 }

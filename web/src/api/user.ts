@@ -1,5 +1,5 @@
-import axios from "axios";
-import { API_URL } from "../types";
+import axios, { AxiosResponse } from "axios";
+import { API_URL, findFriends, User } from "../types";
 
 const USER_API_URL = `${API_URL}/user`;
 
@@ -18,6 +18,17 @@ export const user = {
 
   login: (data: loginInputData) =>
     axios.post(`${USER_API_URL}/login`, data).then((res) => res.data),
+  profile: () =>
+    axios
+      .get<null, AxiosResponse<{ profile: User }>>(`${USER_API_URL}/profile`)
+      .then((res) => res.data),
+
+  logout: () => axios.post(`${USER_API_URL}/logout`).then((res) => res.data),
+
+  findFriends: () =>
+    axios
+      .get<null, AxiosResponse<findFriends>>(`${USER_API_URL}/friends/find`)
+      .then((res) => res.data),
 };
 
 // asas

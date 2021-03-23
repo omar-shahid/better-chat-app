@@ -1,14 +1,26 @@
-import React, { useMemo, useState } from "react";
 import { Transition } from "@headlessui/react";
 import cl from "classnames";
+import React, { useContext, useMemo, useState } from "react";
+import { useMutation } from "react-query";
 import { Link } from "react-router-dom";
+import { api } from "../api";
+import { UserContext } from "../contexts/user";
 
 interface Props {}
 
 const Navbar: React.FC<Props> = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const mainNav = useMemo(() => [{ name: "Home", url: "/" }], []);
+  const [user, setUser] = useContext(UserContext)!;
+  const logoutMutation = useMutation("logout", api.user.logout);
+  const mainNav = useMemo(
+    () => [
+      { name: "Dashboard", url: "/dashboard" },
+      { name: "Find new friends", url: "/friends/find" },
+      { name: "Friends", url: "/friends" },
+    ],
+    []
+  );
   const sideNavLinks = useMemo(
     () => [
       { name: "Register", url: "/register", cta: true },
@@ -74,42 +86,44 @@ const Navbar: React.FC<Props> = () => {
           leaveFrom="transform opacity-100 scale-100"
           leaveTo="transform opacity-0 scale-95"
         >
-          {(ref) => (
-            <div
-              ref={ref}
-              className="absolute right-0 w-48 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-              role="menu"
-              aria-orientation="vertical"
-              aria-labelledby="user-menu"
+          <div
+            className="absolute right-0 w-48 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+            role="menu"
+            aria-orientation="vertical"
+            aria-labelledby="user-menu"
+          >
+            <Link
+              to="/profile"
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              role="menuitem"
             >
-              <a
-                href="#"
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                role="menuitem"
-              >
-                Your Profile
-              </a>
-              <a
-                href="#"
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                role="menuitem"
-              >
-                Settings
-              </a>
-              <a
-                href="#"
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                role="menuitem"
-              >
-                Sign out
-              </a>
-            </div>
-          )}
+              Your Profile
+            </Link>
+            <Link
+              to="/settings"
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              role="menuitem"
+            >
+              Settings
+            </Link>
+            <button
+              onClick={() =>
+                logoutMutation
+                  .mutateAsync()
+                  .then(() => setUser(false))
+                  .catch((e) => console.log(e))
+              }
+              className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
+              role="menuitem"
+            >
+              Sign out
+            </button>
+          </div>
         </Transition>
       </div>
     </div>
   );
-  if (true)
+  if (!user)
     sideNav = (
       <div className="flex items-baseline ml-10 space-x-4">
         {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
@@ -145,39 +159,18 @@ const Navbar: React.FC<Props> = () => {
                   alt="Workflow"
                 />
               </div>
+
               <div className="hidden md:block">
                 <div className="flex items-baseline ml-10 space-x-4">
-                  {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
-                  <a
-                    href="#"
-                    className="px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-md"
-                  >
-                    Dashboard
-                  </a>
-                  <a
-                    href="#"
-                    className="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white"
-                  >
-                    Team
-                  </a>
-                  <a
-                    href="#"
-                    className="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white"
-                  >
-                    Projects
-                  </a>
-                  <a
-                    href="#"
-                    className="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white"
-                  >
-                    Calendar
-                  </a>
-                  <a
-                    href="#"
-                    className="px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white"
-                  >
-                    Reports
-                  </a>
+                  {mainNav.map((link) => (
+                    <Link
+                      key={link.url}
+                      to={link.url}
+                      className="px-3 py-2 text-sm font-medium text-white rounded-md hover:bg-gray-900"
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
                 </div>
               </div>
             </div>

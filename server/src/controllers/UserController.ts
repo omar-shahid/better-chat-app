@@ -1,11 +1,12 @@
 import argon2 from "argon2";
 import { Response } from "express";
+import { FriendClass } from "src/models/Friend";
+import User from "../models/User";
+import { ExpressRequest } from "../types";
 import {
   loginInputType,
   loginInputValidator,
 } from "../validators/loginInputValidator";
-import User from "../models/User";
-import { ExpressRequest } from "../types";
 import {
   registerInputType,
   registerInputValidator,
@@ -50,7 +51,7 @@ class UserController {
         return res.status(422).json({ errors: ["Invalid email or password"] });
       if (!(await argon2.verify(user.password, input.password)))
         return res.status(422).json({ errors: ["Invalid email or password"] });
-      req.session.uid = user.id;
+      req.session.qid = user.id;
       return res.json({
         success: true,
       });
@@ -64,6 +65,48 @@ class UserController {
         return res.status(500).json({ errors: ["Internal Server Error"] });
       }
     }
+  }
+
+  public async profile(req: ExpressRequest, res: Response) {
+    const userId = req.session.qid;
+
+    const user = await User.findById(userId).select("-rooms -password");
+    res.json({ profile: user });
+  }
+
+  public async rooms(req: ExpressRequest, res: Response) {
+    const userId = req.session.qid;
+
+    const rooms = await User.findById(userId).select("rooms -_id");
+    res.json({ rooms: rooms });
+  }
+
+  public async findFriends(req: ExpressRequest, res: Response) {
+    const userId = req.session.qid;
+
+    const currUser = await User.findById(userId, "friends").populate(
+      "friends",
+      "users"
+    );
+
+    const usersToBeExcluded = (
+      currUser?.friends?.map((friend) =>
+        (friend as FriendClass).users.map((d) => d)
+      ) ?? []
+    ).concat(currUser?.id); // In case user got no friends and DB filter won't have user id
+
+    const users = await User.find({
+      _id: { $nin: usersToBeExcluded?.flat() },
+    }).select("name");
+    res.json(users);
+  }
+
+  public logout(req: ExpressRequest, res: Response) {
+    req.session.destroy((err) => {
+      res.clearCookie("qid");
+      if (err) console.log(err);
+      res.json({ success: true });
+    });
   }
 }
 

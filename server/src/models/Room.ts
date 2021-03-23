@@ -20,5 +20,5 @@ export class RoomClass {
 }
 
 export default getModelForClass(RoomClass, {
-  schemaOptions: { timestamps: true },
+  schemaOptions: { timestamps: true, collection: "rooms" },
 });

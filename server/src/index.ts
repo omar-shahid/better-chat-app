@@ -1,12 +1,15 @@
+import MongoStore from "connect-mongo";
+import cors from "cors";
 import express from "express";
+import session from "express-session";
 import http from "http";
+import mongoose from "mongoose";
+import logger from "morgan";
 import { Server, Socket } from "socket.io";
 import UserEvents from "./events/User";
-import { EventClassConstructor } from "./types";
+import "./models/Friend";
 import userRoutes from "./routes/userRoutes";
-import mongoose from "mongoose";
-import session from "express-session";
-import MongoStore from "connect-mongo";
+import { EventClassConstructor } from "./types";
 
 const MONGODB_URL = "mongodb://localhost:27017/better-chat-app";
 mongoose.connect(MONGODB_URL, {
@@ -15,10 +18,20 @@ mongoose.connect(MONGODB_URL, {
 });
 
 const app = express();
+app.use(logger("dev"));
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+// app.use((_, res, next) => {
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+//   res.setHeader(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept"
+//   );
+//   next();
+// });
 app.use(
   session({
     secret: "TEST",
-    name: "uid",
+    name: "qid",
     saveUninitialized: false,
     resave: false,
     cookie: {
@@ -32,14 +45,6 @@ app.use(
     }),
   })
 );
-app.use((_, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-});
 app.use(express.json());
 app.get("/", (_, res) => {
   res.send("Working");
@@ -58,7 +63,7 @@ server.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
  *
  */
 
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, { cors: { origin: "http://localhost:3000" } });
 io.on("connection", (socket: Socket) => {
   console.log(socket.id, "connected");
   const eventClasses: Record<string, EventClassConstructor> = {

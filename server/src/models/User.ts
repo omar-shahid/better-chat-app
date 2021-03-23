@@ -1,4 +1,5 @@
-import { prop, getModelForClass, Ref } from "@typegoose/typegoose";
+import { getModelForClass, prop, Ref } from "@typegoose/typegoose";
+import { FriendClass } from "./Friend";
 import { RoomClass } from "./Room";
 
 export class UserClass {
@@ -14,8 +15,8 @@ export class UserClass {
   @prop({ ref: RoomClass })
   rooms?: Ref<RoomClass>[];
 
-  @prop({ ref: () => RoomClass })
-  friends?: Ref<RoomClass>;
+  @prop({ ref: "FriendClass", default: [] })
+  friends?: Ref<FriendClass>[];
 
   @prop({ ref: UserClass })
   recievedRequests?: Ref<UserClass>[];
@@ -25,5 +26,5 @@ export class UserClass {
 }
 
 export default getModelForClass(UserClass, {
-  schemaOptions: { timestamps: true, strict: true },
+  schemaOptions: { timestamps: true, strict: true, collection: "users" },
 });
