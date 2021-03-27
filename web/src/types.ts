@@ -12,7 +12,14 @@ export class User {
   sentRequests?: User[];
 }
 
-export type findFriends = {
+export type findFriends = BasicUserInfo[];
+
+export type RequestList = {
+  sentRequests: BasicUserInfo[];
+  recievedRequests: BasicUserInfo[];
+};
+
+export type BasicUserInfo = {
   _id: string;
   name: string;
-}[];
+};

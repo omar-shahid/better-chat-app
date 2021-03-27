@@ -18,6 +18,7 @@ const Navbar: React.FC<Props> = () => {
       { name: "Dashboard", url: "/dashboard" },
       { name: "Find new friends", url: "/friends/find" },
       { name: "Friends", url: "/friends" },
+      { name: "Requests", url: "/requests" },
     ],
     []
   );

@@ -13,5 +13,9 @@ router.get("/profile", UserController.profile);
 router.get("/rooms", UserController.rooms);
 router.get("/friends/find", UserController.findFriends);
 router.post("/logout", UserController.logout);
+router.post("/requests/send", UserController.sendFriendRequest);
+router.post("/requests/accept", UserController.acceptRequest);
+router.get("/requests/list", UserController.listFriendRequests);
+router.post("/friends", UserController.listFriends);
 
 export default router;

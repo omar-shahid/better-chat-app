@@ -7,7 +7,6 @@ interface Props {}
 
 const FindFriendsPage: React.FC<Props> = () => {
   const { data } = useQuery("findFriends", api.user.findFriends);
-  console.log("data", data);
   return (
     <MainLayout title="Find Friends">
       <div className="flex flex-col">
@@ -50,7 +49,10 @@ const FindFriendsPage: React.FC<Props> = () => {
                       </td>
 
                       <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                        <button className="p-3 text-green-100 bg-green-500 hover:bg-green-700">
+                        <button
+                          onClick={() => api.user.sendRequest(user._id)}
+                          className="p-3 text-green-100 bg-green-500 hover:bg-green-700"
+                        >
                           Send Request
                         </button>
                       </td>

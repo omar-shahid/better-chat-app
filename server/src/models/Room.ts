@@ -1,4 +1,4 @@
-import { prop, getModelForClass, Ref } from "@typegoose/typegoose";
+import { getModelForClass, prop, Ref } from "@typegoose/typegoose";
 import { Types } from "mongoose";
 import { UserClass } from "./User";
 
@@ -10,10 +10,10 @@ type Chat = {
 
 export class RoomClass {
   @prop({ ref: "UserClass" })
-  users?: Ref<UserClass>[];
+  users: Ref<UserClass>[];
 
   @prop()
-  name?: string;
+  name: string;
 
   @prop()
   chat?: Chat[];

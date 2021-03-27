@@ -27,6 +27,8 @@
     "react-router-dom": "^6.0.0-beta.0",
     "react-scripts": "4.0.3",
     "socket.io-client": "^3.1.2",
+    "sweetalert2": "^10.15.6",
+    "sweetalert2-react-content": "^3.3.1",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat",
     "typescript": "^4.1.2",
     "web-vitals": "^1.0.1"

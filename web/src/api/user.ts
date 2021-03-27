@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from "axios";
-import { API_URL, findFriends, User } from "../types";
+import { API_URL, findFriends, RequestList, User } from "../types";
 
 const USER_API_URL = `${API_URL}/user`;
 
@@ -28,6 +28,19 @@ export const user = {
   findFriends: () =>
     axios
       .get<null, AxiosResponse<findFriends>>(`${USER_API_URL}/friends/find`)
+      .then((res) => res.data),
+
+  listRequests: () =>
+    axios
+      .get<null, AxiosResponse<RequestList>>(`${USER_API_URL}/requests/list`)
+      .then((res) => res.data),
+
+  sendRequest: (id: string) =>
+    axios.post(`${USER_API_URL}/requests/send`, { id }).then((res) => res.data),
+
+  acceptRequest: (id: string) =>
+    axios
+      .post(`${USER_API_URL}/requests/accept`, { id })
       .then((res) => res.data),
 };
 
