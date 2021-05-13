@@ -4,15 +4,18 @@ import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import thunk from "redux-thunk";
 import { __prod__ } from "../constants";
+import { errorSlice } from "./reducers/error";
 import { userSlice } from "./reducers/user";
 
 const reducers = combineReducers({
   user: userSlice.reducer,
+  error: errorSlice.reducer,
 });
 
 const persistConfig = {
   key: "root",
   storage,
+  blackList: ["error"],
 };
 
 const persistedReducer = persistReducer(persistConfig, reducers);

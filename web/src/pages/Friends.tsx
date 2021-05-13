@@ -1,5 +1,7 @@
+import React from "react";
 import { useQuery } from "react-query";
 import { useNavigate } from "react-router";
+import { Link } from "react-router-dom";
 import { api } from "../api";
 import MainLayout from "../layouts/Main";
 
@@ -60,6 +62,21 @@ const FriendsPage = () => {
                   {/* More items... */}
                 </tbody>
               </table>
+              {!data?.length && (
+                <div className="flex items-center justify-center h-56">
+                  <div>
+                    <h1 className="text-3xl font-medium text-center text-gray-700">
+                      No Friends Found
+                    </h1>
+                    <br />
+                    <Link to="/friends/find">
+                      <button className="block px-3 py-2 mx-auto text-white bg-blue-600 rounded">
+                        Find new friends
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

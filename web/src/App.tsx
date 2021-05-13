@@ -2,6 +2,7 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Provider as ReduxProvider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
+import ErrorBoundry from "./components/ErrorBoundry";
 import { persistor, store } from "./global/store";
 import WebRoutes from "./routes/WebRoutes";
 const App: React.FC = () => {
@@ -11,7 +12,9 @@ const App: React.FC = () => {
     <ReduxProvider store={store}>
       <PersistGate persistor={persistor} loading={null}>
         <QueryClientProvider client={client}>
-          <WebRoutes />
+          <ErrorBoundry>
+            <WebRoutes />
+          </ErrorBoundry>
         </QueryClientProvider>
       </PersistGate>
     </ReduxProvider>
