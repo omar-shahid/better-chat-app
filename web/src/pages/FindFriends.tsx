@@ -6,7 +6,7 @@ import MainLayout from "../layouts/Main";
 interface Props {}
 
 const FindFriendsPage: React.FC<Props> = () => {
-  const { data } = useQuery("findFriends", api.user.findFriends);
+  const { data } = useQuery("findFriends", api.friends.findFriends);
   return (
     <MainLayout title="Find Friends">
       <div className="flex flex-col">
@@ -50,7 +50,7 @@ const FindFriendsPage: React.FC<Props> = () => {
 
                       <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                         <button
-                          onClick={() => api.user.sendRequest(user._id)}
+                          onClick={() => api.friends.sendRequest(user._id)}
                           className="p-3 text-green-100 bg-green-500 hover:bg-green-700"
                         >
                           Send Request

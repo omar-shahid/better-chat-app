@@ -1,6 +1,7 @@
-import React, { useContext } from "react";
-import { Route, useNavigate } from "react-router-dom";
-import { UserContext } from "../contexts/user";
+import React from "react";
+import { useSelector } from "react-redux";
+import { Navigate, Route, useSearchParams } from "react-router-dom";
+import { RootState } from "../global/store";
 
 interface Props {
   caseSensitive?: boolean;
@@ -10,7 +11,18 @@ interface Props {
 }
 
 export const PublicRoute: React.FC<Props> = ({ element, ...rest }) => {
-  const [user] = useContext(UserContext)!;
-  const navigate = useNavigate();
-  return <Route element={!user ? element : <>{navigate(-1)} </>} {...rest} />;
+  const { isLoggedIn } = useSelector((store: RootState) => store.user);
+  const [params] = useSearchParams();
+  return (
+    <Route
+      element={
+        !isLoggedIn ? (
+          element
+        ) : (
+          <Navigate to={`/${params.get("return-url") ?? "dashboard"}`} />
+        )
+      }
+      {...rest}
+    />
+  );
 };

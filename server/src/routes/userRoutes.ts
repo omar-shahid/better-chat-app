@@ -16,6 +16,6 @@ router.post("/logout", UserController.logout);
 router.post("/requests/send", UserController.sendFriendRequest);
 router.post("/requests/accept", UserController.acceptRequest);
 router.get("/requests/list", UserController.listFriendRequests);
-router.post("/friends", UserController.listFriends);
+router.get("/friends", UserController.listFriends);
 
 export default router;

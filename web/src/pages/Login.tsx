@@ -1,19 +1,30 @@
-import MainLayout from "../layouts/Main";
-import { Formik, Field, Form } from "formik";
-import { api } from "../api";
-import { useContext, useState } from "react";
+import { Field, Form, Formik } from "formik";
+import { useState } from "react";
 import { useMutation } from "react-query";
-import { FormValidationMessages } from "../components/FormValidationMessages";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
-import { UserContext } from "../contexts/user";
+import { useSearchParams } from "react-router-dom";
+import { api, loginInputData } from "../api";
+import { FormValidationMessages } from "../components/FormValidationMessages";
+import MainLayout from "../layouts/Main";
+import { socket } from "../socket";
+import { userActions } from "./../global/reducers/user";
 
 interface Props {}
 
 const LoginPage: React.FC<Props> = () => {
+  // REDUX
+  const dispatch = useDispatch();
+
+  // REACT
   const [errors, setErrors] = useState<string[]>([]);
-  const login = useMutation(api.user.login);
+  const login = useMutation((val: loginInputData) =>
+    api.user.login(val).then(() => api.user.profile())
+  );
+
+  //REACT ROUTER DOM
   const navigate = useNavigate();
-  const [, setUser] = useContext(UserContext)!;
+  const [searchParams] = useSearchParams();
 
   return (
     <MainLayout title="Register | Chat App">
@@ -37,9 +48,16 @@ const LoginPage: React.FC<Props> = () => {
             onSubmit={(values) =>
               login
                 .mutateAsync(values)
-                .then(() => {
-                  setUser(true);
-                  navigate("/dashboard");
+                .then(({ profile }) => {
+                  socket.emit("user:registerUserSocket");
+                  dispatch(
+                    userActions.logIn({
+                      isLoggedIn: true,
+                      name: profile.name,
+                      email: profile.email,
+                    })
+                  );
+                  navigate(searchParams.get("return-url") ?? "/dashboard");
                 })
                 .catch((e) => setErrors(e.response.data.errors as string[]))
             }

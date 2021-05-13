@@ -1,18 +1,22 @@
 import { Transition } from "@headlessui/react";
 import cl from "classnames";
-import React, { useContext, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useMutation } from "react-query";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { api } from "../api";
-import { UserContext } from "../contexts/user";
+import { RootState, useAppDispatch } from "../global/store";
+import { userActions } from "./../global/reducers/user";
 
 interface Props {}
 
 const Navbar: React.FC<Props> = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useContext(UserContext)!;
   const logoutMutation = useMutation("logout", api.user.logout);
+  const user = useSelector((store: RootState) => store.user);
+  const { logout } = userActions;
+  const dispatch = useAppDispatch();
   const mainNav = useMemo(
     () => [
       { name: "Dashboard", url: "/dashboard" },
@@ -30,7 +34,7 @@ const Navbar: React.FC<Props> = () => {
     []
   );
   let sideNav = (
-    <div className="flex items-center ml-4 md:ml-6">
+    <div className="items-center hidden ml-4 md:ml-6 md:flex ">
       <button className="p-1 text-gray-400 bg-gray-800 rounded-full hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
         <span className="sr-only">View notifications</span>
         {/* Heroicon name: outline/bell */}
@@ -51,7 +55,7 @@ const Navbar: React.FC<Props> = () => {
         </svg>
       </button>
       {/* Profile dropdown */}
-      <div className="relative ml-3">
+      <div className={cl("relative ml-3 ")}>
         <div>
           <button
             type="button"
@@ -69,16 +73,6 @@ const Navbar: React.FC<Props> = () => {
             />
           </button>
         </div>
-        {/*
-                Dropdown menu, show/hide based on menu state.
-
-                Entering: "transition ease-out duration-100"
-                  From: "transform opacity-0 scale-95"
-                  To: "transform opacity-100 scale-100"
-                Leaving: "transition ease-in duration-75"
-                  From: "transform opacity-100 scale-100"
-                  To: "transform opacity-0 scale-95"
-              */}
         <Transition
           show={isDropdownOpen}
           enter="transition ease-out duration-100"
@@ -111,20 +105,20 @@ const Navbar: React.FC<Props> = () => {
               onClick={() =>
                 logoutMutation
                   .mutateAsync()
-                  .then(() => setUser(false))
+                  .then(() => dispatch(logout()))
                   .catch((e) => console.log(e))
               }
               className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
               role="menuitem"
             >
-              Sign out
+              Sign Out
             </button>
           </div>
         </Transition>
       </div>
     </div>
   );
-  if (!user)
+  if (!user.isLoggedIn)
     sideNav = (
       <div className="flex items-baseline ml-10 space-x-4">
         {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
@@ -138,7 +132,8 @@ const Navbar: React.FC<Props> = () => {
                   link.cta,
               },
               {
-                "px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white": !link.cta,
+                "px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white":
+                  !link.cta,
               }
             )}
           >
@@ -154,15 +149,21 @@ const Navbar: React.FC<Props> = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <img
-                  className="w-8 h-8"
-                  src="https://tailwindui.com/img/logos/workflow-mark-indigo-500.svg"
-                  alt="Workflow"
-                />
+                <Link to="/">
+                  <img
+                    className="w-8 h-8"
+                    src="https://tailwindui.com/img/logos/workflow-mark-indigo-500.svg"
+                    alt="Workflow"
+                  />
+                </Link>
               </div>
 
               <div className="hidden md:block">
-                <div className="flex items-baseline ml-10 space-x-4">
+                <div
+                  className={cl("flex items-baseline ml-10 space-x-4", {
+                    hidden: !user.isLoggedIn,
+                  })}
+                >
                   {mainNav.map((link) => (
                     <Link
                       key={link.url}
@@ -177,7 +178,11 @@ const Navbar: React.FC<Props> = () => {
             </div>
             {sideNav}
             <div className="hidden md:block"></div>
-            <div className="flex -mr-2 md:hidden">
+            <div
+              className={cl("flex mr-2 md:hidden", {
+                hidden: !user.isLoggedIn,
+              })}
+            >
               {/* Mobile menu button */}
               <button
                 type="button"
@@ -235,36 +240,15 @@ const Navbar: React.FC<Props> = () => {
         <div className={cl("md:hidden", { hidden: !isOpen })} id="mobile-menu">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
-            <a
-              href="#"
-              className="block px-3 py-2 text-base font-medium text-white bg-gray-900 rounded-md"
-            >
-              Dashboard
-            </a>
-            <a
-              href="#"
-              className="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white"
-            >
-              Team
-            </a>
-            <a
-              href="#"
-              className="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white"
-            >
-              Projects
-            </a>
-            <a
-              href="#"
-              className="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white"
-            >
-              Calendar
-            </a>
-            <a
-              href="#"
-              className="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white"
-            >
-              Reports
-            </a>
+            {mainNav.map((link) => (
+              <Link
+                to={link.url}
+                key={link.name}
+                className="block px-3 py-2 text-base font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white"
+              >
+                {link.name}
+              </Link>
+            ))}
           </div>
           <div className="pt-4 pb-3 border-t border-gray-700">
             <div className="flex items-center px-5">
@@ -277,10 +261,10 @@ const Navbar: React.FC<Props> = () => {
               </div>
               <div className="ml-3">
                 <div className="text-base font-medium leading-none text-white">
-                  Tom Cook
+                  {user.name}
                 </div>
                 <div className="text-sm font-medium leading-none text-gray-400">
-                  tom@example.com
+                  {user.email}
                 </div>
               </div>
               <button className="flex-shrink-0 p-1 ml-auto text-gray-400 bg-gray-800 rounded-full hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
@@ -304,24 +288,25 @@ const Navbar: React.FC<Props> = () => {
               </button>
             </div>
             <div className="px-2 mt-3 space-y-1">
-              <a
-                href="#"
+              <Link
+                to="/profile"
                 className="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-700"
               >
                 Your Profile
-              </a>
-              <a
-                href="#"
-                className="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-700"
+              </Link>
+
+              <button
+                onClick={() =>
+                  logoutMutation
+                    .mutateAsync()
+                    .then(() => dispatch(logout()))
+                    .catch((e) => console.log(e))
+                }
+                className="block w-full px-4 py-2 text-sm text-left text-gray-400 hover:text-white"
+                role="menuitem"
               >
-                Settings
-              </a>
-              <a
-                href="#"
-                className="block px-3 py-2 text-base font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-700"
-              >
-                Sign out
-              </a>
+                Sign Out
+              </button>
             </div>
           </div>
         </div>

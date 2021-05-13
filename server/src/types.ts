@@ -1,5 +1,5 @@
 import { Application } from "express";
-import { Socket } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { Request } from "express";
 
 export enum Events {
@@ -7,7 +7,7 @@ export enum Events {
 }
 
 export interface EventClassConstructor {
-  new (socket: Socket, app: Application): EventClass;
+  new (socket: Socket, app: Application, io:Server): EventClass;
 }
 export interface EventClass {
   events: Record<string, (...args: any[]) => void>;

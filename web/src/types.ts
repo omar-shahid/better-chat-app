@@ -1,15 +1,13 @@
-export const API_URL = "http://localhost:4000/api";
 type Friend = {
   roomId: string;
   userId: string;
 };
-export class User {
-  name!: string;
-  email!: string;
-  password!: string;
-  friends?: Friend[];
-  recievedRequests?: User[];
-  sentRequests?: User[];
+export interface User {
+  name: string;
+  email: string;
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type findFriends = BasicUserInfo[];

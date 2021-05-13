@@ -21,6 +21,9 @@ export class UserClass {
 
   @prop({ ref: RequestClass })
   requests?: Ref<RequestClass>[];
+
+  @prop()
+  socket?: string;
 }
 
 export default getModelForClass(UserClass, {

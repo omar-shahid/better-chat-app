@@ -9,11 +9,11 @@ import User from "../models/User";
 import { ExpressRequest } from "../types";
 import {
   loginInputType,
-  loginInputValidator,
+  loginInputValidator
 } from "../validators/loginInputValidator";
 import {
   registerInputType,
-  registerInputValidator,
+  registerInputValidator
 } from "../validators/registerInputValidator";
 
 class UserController {
@@ -74,7 +74,7 @@ class UserController {
   public async profile(req: ExpressRequest, res: Response) {
     const userId = req.session.qid;
 
-    const user = await User.findById(userId).select("-rooms -password");
+    const user = await User.findById(userId).select("-rooms -password -requests -friends -socket");
     res.json({ profile: user });
   }
 

@@ -1,14 +1,14 @@
 import React from "react";
 import { useQuery } from "react-query";
-import { api } from "../api";
-import MainLayout from "../layouts/Main";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import { api } from "../api";
+import MainLayout from "../layouts/Main";
 
 interface Props {}
 
 const RequestsPage: React.FC<Props> = () => {
-  const { data } = useQuery("requests", api.user.listRequests);
+  const { data } = useQuery("requests", api.friends.listRequests);
   const modal = withReactContent(Swal);
   type modalParams = Parameters<typeof modal>[0];
   const success: (s: string) => modalParams = (s: string) => ({
@@ -116,7 +116,7 @@ const RequestsPage: React.FC<Props> = () => {
                       <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                         <button
                           onClick={() =>
-                            api.user
+                            api.friends
                               .acceptRequest(user._id)
                               .then(() => modal.fire(success(user.name)))
                               .catch(() => modal.fire(success("SF Error")))
