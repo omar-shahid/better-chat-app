@@ -3,11 +3,18 @@ import { useQuery } from "react-query";
 import { useNavigate } from "react-router";
 import { Link } from "react-router-dom";
 import { api } from "../api";
+import Loader from "../components/Loader";
 import MainLayout from "../layouts/Main";
 
 const FriendsPage = () => {
-  const { data } = useQuery("friends", api.friends.listFriends);
+  const { data, isLoading } = useQuery("friends", api.friends.listFriends);
   const router = useNavigate();
+  if (isLoading)
+    return (
+      <MainLayout title="Friends - Loading">
+        <Loader />
+      </MainLayout>
+    );
   return (
     <MainLayout title="Friends">
       <div className="flex flex-col">

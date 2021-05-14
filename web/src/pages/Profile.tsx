@@ -1,13 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { api } from "../api";
-import MainLayout from "../layouts/Main";
-import { User } from "../types";
+import React from "react";
 import { useQuery } from "react-query";
+import { api } from "../api";
+import Loader from "../components/Loader";
+import MainLayout from "../layouts/Main";
 
 interface Props {}
 
 const ProfilePage: React.FC<Props> = () => {
-  const { data } = useQuery("profile", api.user.profile);
+  const { data, isLoading } = useQuery("profile", api.user.profile);
+  if (isLoading)
+    return (
+      <MainLayout title="Friends - Loading">
+        <Loader />
+      </MainLayout>
+    );
   return (
     <MainLayout title="Profile">
       <h1>{data?.profile.name}</h1>

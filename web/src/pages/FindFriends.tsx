@@ -1,13 +1,19 @@
 import React from "react";
 import { useQuery } from "react-query";
-import { Link } from "react-router-dom";
 import { api } from "../api";
+import Loader from "../components/Loader";
 import MainLayout from "../layouts/Main";
 
 interface Props {}
 
 const FindFriendsPage: React.FC<Props> = () => {
-  const { data } = useQuery("findFriends", api.friends.findFriends);
+  const { data, isLoading } = useQuery("findFriends", api.friends.findFriends);
+  if (isLoading)
+    return (
+      <MainLayout title="Friends - Loading">
+        <Loader />
+      </MainLayout>
+    );
   return (
     <MainLayout title="Find Friends">
       <div className="flex flex-col">
@@ -69,11 +75,6 @@ const FindFriendsPage: React.FC<Props> = () => {
                       No Users found
                     </h1>
                     <br />
-                    <Link to="/friends/find">
-                      <button className="block px-3 py-2 mx-auto text-white bg-blue-600 rounded">
-                        Find new friends
-                      </button>
-                    </Link>
                   </div>
                 </div>
               )}
