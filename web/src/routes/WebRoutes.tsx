@@ -13,6 +13,11 @@ import { PublicRoute } from "./PublicRoute";
 import { UserRoute } from "./UserRoute";
 
 const WebRoutes: React.FC = () => {
+  // useEffect(() => {
+  //   socket.on("notLoggedIn", () => {
+  //     dispatch(userActions.logout());
+  //   });
+  // }, []);
   return (
     <>
       <BrowserRouter>

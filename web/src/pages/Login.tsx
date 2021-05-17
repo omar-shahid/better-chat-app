@@ -55,6 +55,7 @@ const LoginPage: React.FC<Props> = () => {
                       isLoggedIn: true,
                       name: profile.name,
                       email: profile.email,
+                      id: profile._id,
                     })
                   );
                   navigate(searchParams.get("return-url") ?? "/dashboard");

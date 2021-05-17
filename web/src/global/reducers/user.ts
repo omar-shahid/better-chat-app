@@ -4,12 +4,14 @@ export type UserState = {
   isLoggedIn: boolean;
   name: string;
   email: string;
+  id: string;
 };
 
 const initialState: UserState = {
   name: "",
   email: "",
   isLoggedIn: false,
+  id: "",
 };
 
 export const userSlice = createSlice({

@@ -17,5 +17,6 @@ router.post("/requests/send", UserController.sendFriendRequest);
 router.post("/requests/accept", UserController.acceptRequest);
 router.get("/requests/list", UserController.listFriendRequests);
 router.get("/friends", UserController.listFriends);
+router.post("/messages/prev", UserController.getPreviousMessages);
 
 export default router;

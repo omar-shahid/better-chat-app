@@ -1,5 +1,5 @@
 import React from "react";
-import loader from "../images/loader.svg";
+import loader from "../assets/images/loader.svg";
 
 const Loader: React.FC = () => {
   return (

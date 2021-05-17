@@ -1,6 +1,6 @@
 import argon2 from "argon2";
 import { Response } from "express";
-import { ObjectId } from "mongodb";
+import { ObjectID, ObjectId } from "mongodb";
 import { v4 } from "uuid";
 import Friend, { FriendClass } from "../models/Friend";
 import Request from "../models/Request";
@@ -9,11 +9,11 @@ import User from "../models/User";
 import { ExpressRequest } from "../types";
 import {
   loginInputType,
-  loginInputValidator
+  loginInputValidator,
 } from "../validators/loginInputValidator";
 import {
   registerInputType,
-  registerInputValidator
+  registerInputValidator,
 } from "../validators/registerInputValidator";
 
 class UserController {
@@ -74,7 +74,9 @@ class UserController {
   public async profile(req: ExpressRequest, res: Response) {
     const userId = req.session.qid;
 
-    const user = await User.findById(userId).select("-rooms -password -requests -friends -socket");
+    const user = await User.findById(userId).select(
+      "-rooms -password -requests -friends -socket"
+    );
     res.json({ profile: user });
   }
 
@@ -239,6 +241,24 @@ class UserController {
     );
     console.log(friendsArr);
     res.json(friendsData);
+  }
+
+  public async getPreviousMessages(
+    req: ExpressRequest<{ friendUserId: string }>,
+    res: Response
+  ) {
+    if (!req.body.friendUserId)
+      return res.status(400).json({ error: "Provide Friend User ID" });
+    const room = await Room.findOne({
+      users: {
+        $all: [
+          new ObjectID(req.session.qid),
+          new ObjectID(req.body.friendUserId),
+        ],
+      },
+    });
+    if (!room) return res.status(401).json({ error: ["UnAuthorized"] });
+    return res.json({ messages: room.chat });
   }
 }
 

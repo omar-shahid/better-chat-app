@@ -21,3 +21,9 @@ export type BasicUserInfo = {
   _id: string;
   name: string;
 };
+
+export type Message = {
+  message: string;
+  sender: string;
+  createdAt: string;
+};
