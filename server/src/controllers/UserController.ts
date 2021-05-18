@@ -3,6 +3,7 @@ import { Response } from "express";
 import { ObjectID, ObjectId } from "mongodb";
 import { v4 } from "uuid";
 import Friend, { FriendClass } from "../models/Friend";
+import Notification from "../models/Notification";
 import Request from "../models/Request";
 import Room from "../models/Room";
 import User from "../models/User";
@@ -16,6 +17,7 @@ import {
   registerInputValidator,
 } from "../validators/registerInputValidator";
 
+// const sessionQIDsocketMap: Record<string, string> = {}
 class UserController {
   public async register(req: ExpressRequest<registerInputType>, res: Response) {
     const input = req.body;
@@ -127,6 +129,14 @@ class UserController {
     if (!currUser || !secondUser)
       return res.status(400).json({ errors: ["Ids requried"] });
 
+    const isRequestExists = await Request.findOne({
+      senderId: currUser?.id,
+      recieverId: secondUser?.id,
+    });
+
+    if (isRequestExists)
+      return res.status(409).json({ errors: ["Request Already sent."] });
+
     const newRequest = new Request({
       senderId: currUser?.id,
       recieverId: secondUser?.id,
@@ -138,6 +148,19 @@ class UserController {
 
     await currUser.save();
     await secondUser.save();
+
+    const notification = new Notification();
+    notification.users = [secondUser.id];
+    notification.details = {
+      type: "RequestSent",
+      userInteracted: currUser.id,
+    };
+    notification.message = `${currUser.name} has sent you a friend request`;
+
+    await notification.save();
+    req.app.io
+      .to(req.app.sessionQIDtoSocketMap[secondUser.id])
+      .emit("notification:new", notification);
 
     return res.json({ success: true });
   }
@@ -218,6 +241,19 @@ class UserController {
     await currUser.save();
     await secondUser.save();
     await requestObj.remove();
+
+    const notification = new Notification();
+    notification.users = [secondUser.id];
+    notification.details = {
+      type: "RequestAccepted",
+      userInteracted: currUser.id,
+    };
+    notification.message = `${currUser.name} has accepted your request!`;
+
+    await notification.save();
+    req.app.io
+      .to(req.app.sessionQIDtoSocketMap[secondUser.id])
+      .emit("notification:new", notification);
 
     return res.json({ success: true });
   }

@@ -1,6 +1,12 @@
 /* eslint-disable import/first */
 import { AxiosResponse } from "axios";
-import { findFriends, Message, RequestList, User } from "../types";
+import {
+  findFriends,
+  Message,
+  Notification,
+  RequestList,
+  User,
+} from "../types";
 import apiClient from "./apiClient";
 
 const USER_API_URL = `/user`;
@@ -60,6 +66,14 @@ export const api = {
         .post<{ friendUserId: string }, AxiosResponse<{ messages: Message[] }>>(
           "/user/messages/prev",
           { friendUserId }
+        )
+        .then((res) => res.data),
+  },
+  notifications: {
+    getAllNotifications: () =>
+      apiClient
+        .get<null, AxiosResponse<{ notifications: Notification[] }>>(
+          "/notifications"
         )
         .then((res) => res.data),
   },

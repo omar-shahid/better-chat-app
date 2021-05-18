@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node --files src/index.ts",
+    "dev": "ts-node-dev --files src/index.ts",
     "start": "node dist/index.js",
     "compile": "tsc",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register --files 'src/tests/**/*.ts'"

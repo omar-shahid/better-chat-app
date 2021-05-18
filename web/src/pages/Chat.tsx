@@ -14,10 +14,6 @@ import MainLayout from "../layouts/Main";
 import { Message } from "../types";
 import { socket } from "./../socket";
 
-const audioURL = "/audio/notify.mp3";
-
-const audio = new Audio(audioURL);
-audio.crossOrigin = "anonymous";
 
 const ChatPage: React.FC = () => {
   const user = useSelector((store: RootState) => store.user);
@@ -56,7 +52,6 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     socket.on("user:incomingMessage", (message: Message) => {
       setMessages((p) => p.concat(message));
-      if (message.sender !== user.id) audio.play();
     });
   }, [user.id]);
 
@@ -153,8 +148,9 @@ const ChatPage: React.FC = () => {
                   />
                 )}
                 <button
-                  className="w-16 h-full py-2 bg-white text-orange"
+                  className="w-16 py-2 bg-white text-orange"
                   type="button"
+                  style={{ height: "90px" }}
                   onClick={() => setEmojiModalOpened(!emojiModalOpened)}
                 >
                   😉
@@ -163,6 +159,7 @@ const ChatPage: React.FC = () => {
               <button
                 className="flex-1 block px-3 py-2 text-white bg-blue-600 "
                 type="submit"
+                style={{ height: "90px" }}
               >
                 Send
               </button>

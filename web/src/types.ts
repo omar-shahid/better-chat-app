@@ -20,6 +20,7 @@ export type RequestList = {
 export type BasicUserInfo = {
   _id: string;
   name: string;
+  email: string;
 };
 
 export type Message = {
@@ -27,3 +28,13 @@ export type Message = {
   sender: string;
   createdAt: string;
 };
+
+export interface Notification {
+  _id: string;
+  users: User;
+  details: {
+    type: string;
+    userInteracted: User;
+  };
+  message: string;
+}

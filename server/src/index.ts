@@ -9,10 +9,9 @@ import logger from "morgan";
 import { Server, Socket } from "socket.io";
 import UserEvents from "./events/User";
 import "./models/Friend";
+import notificationRoutes from "./routes/notificationRoutes";
 import userRoutes from "./routes/userRoutes";
 import { EventClassConstructor } from "./types";
-
-
 
 const MONGODB_URL = "mongodb://localhost:27017/better-chat-app";
 mongoose.connect(MONGODB_URL, {
@@ -36,17 +35,16 @@ const session = expressSession({
   }),
 });
 
-
 const whitelist = ["http://localhost:3000", "http://192.168.2.104:3000"];
 
 const corsConfig: cors.CorsOptions = {
-  origin:function (origin, callback) {
+  origin: function (origin, callback) {
     if (!origin || whitelist.indexOf(origin) !== -1) {
-      callback(null, true)
+      callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'))
+      callback(new Error("Not allowed by CORS"));
     }
-  } ,
+  },
   credentials: true,
 };
 
@@ -61,6 +59,7 @@ app.get("/", (_, res) => {
 });
 
 app.use("/api/user", userRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 const server = http.createServer(app);
 
@@ -71,10 +70,16 @@ const server = http.createServer(app);
  */
 
 const io = new Server(server, { cors: corsConfig });
+
+// Attaching io to express app
+app.io = io;
+app.sessionQIDtoSocketMap = {};
 io.use(sharedSession(session));
 // io.use(socketIoLogger());
 io.on("connection", (socket: Socket) => {
-  console.log(socket.id, "connected");
+  // console.log(socket.id, "connected");
+  // console.log("Socket Handshake: ", (socket.handshake as any).session.qid);
+  app.sessionQIDtoSocketMap[(socket.handshake as any).session.qid] = socket.id;
   const eventClasses: Record<string, EventClassConstructor> = {
     user: UserEvents,
   };

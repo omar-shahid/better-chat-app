@@ -1,22 +1,55 @@
 import { Transition } from "@headlessui/react";
 import cl from "classnames";
-import React, { useMemo, useState } from "react";
-import { useMutation } from "react-query";
+import React, { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery } from "react-query";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { RootState, useAppDispatch } from "../global/store";
+import { socket } from "../socket";
+import { Notification } from "../types";
 import { userActions } from "./../global/reducers/user";
 
 interface Props {}
 
 const Navbar: React.FC<Props> = () => {
+  const navigate = useNavigate();
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [newNotificationCame, setNewNotificationCame] = useState(false);
+
   const [isOpen, setIsOpen] = useState(false);
   const logoutMutation = useMutation("logout", api.user.logout);
   const user = useSelector((store: RootState) => store.user);
   const { logout } = userActions;
   const dispatch = useAppDispatch();
+
+  const notificationSoundURL = "audio/notification.mp3";
+  const notificationAudio = useMemo(() => new Audio(notificationSoundURL), []);
+  notificationAudio.crossOrigin = "anonymous";
+
+  const { data } = useQuery(
+    "notifications",
+    api.notifications.getAllNotifications
+  );
+  const [notifications, setNotifications] = useState<Notification[]>(
+    data?.notifications ?? []
+  );
+
+  useEffect(() => {
+    socket.on("notification:new", (notification: Notification) => {
+      console.log("notification: ", notification);
+      setNotifications((p) => [notification, ...p]);
+      setNewNotificationCame(true);
+      notificationAudio.play();
+    });
+  }, [notificationAudio]);
+
+  useEffect(() => {
+    if (data?.notifications) setNotifications(data?.notifications);
+  }, [data]);
+
   const mainNav = useMemo(
     () => [
       { name: "Dashboard", url: "/dashboard" },
@@ -35,25 +68,67 @@ const Navbar: React.FC<Props> = () => {
   );
   let sideNav = (
     <div className="items-center hidden ml-4 md:ml-6 md:flex ">
-      <button className="p-1 text-gray-400 bg-gray-800 rounded-full hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
-        <span className="sr-only">View notifications</span>
-        {/* Heroicon name: outline/bell */}
-        <svg
-          className="w-6 h-6"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          aria-hidden="true"
+      <div className={cl("relative ml-3 ")}>
+        <div>
+          <button
+            onClick={() => {
+              if (newNotificationCame) setNewNotificationCame(false);
+              setIsNotificationOpen((p) => !p);
+            }}
+            className="p-1 text-gray-400 bg-gray-800 rounded-full hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+          >
+            <span className="sr-only">View notifications</span>
+            {/* Heroicon name: outline/bell */}
+            <svg
+              className="w-6 h-6"
+              xmlns="http://www.w3.org/2000/svg"
+              fill={newNotificationCame ? "#10B981" : "none"}
+              viewBox="0 0 24 24"
+              stroke={newNotificationCame ? "#10B981" : "currentColor"}
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              />
+            </svg>
+          </button>
+        </div>
+        <Transition
+          show={isNotificationOpen}
+          enter="transition ease-out duration-100"
+          enterFrom="transform opacity-0 scale-95"
+          leave="transition ease-in duration-75"
+          leaveFrom="transform opacity-100 scale-100"
+          leaveTo="transform opacity-0 scale-95"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-          />
-        </svg>
-      </button>
+          <div
+            className="absolute right-0 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg h-96 w-80 ring-1 ring-black ring-opacity-5 focus:outline-none"
+            role="menu"
+            aria-orientation="vertical"
+            aria-labelledby="user-menu"
+          >
+            {notifications.map((notification) => (
+              <Link
+                key={notification._id}
+                to={
+                  notification.details.type === "RequestSent"
+                    ? `/requests`
+                    : notification.details.type === "RequestAccepted"
+                    ? "/friends"
+                    : "/"
+                }
+                className="block px-4 py-4 text-sm text-gray-700 border-b border-gray-300 hover:bg-gray-100"
+                role="menuitem"
+              >
+                {notification.message}
+              </Link>
+            ))}
+          </div>
+        </Transition>
+      </div>
       {/* Profile dropdown */}
       <div className={cl("relative ml-3 ")}>
         <div>
@@ -267,15 +342,22 @@ const Navbar: React.FC<Props> = () => {
                   {user.email}
                 </div>
               </div>
-              <button className="flex-shrink-0 p-1 ml-auto text-gray-400 bg-gray-800 rounded-full hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+              <button
+                onClick={() => {
+                  if (newNotificationCame) setNewNotificationCame(false);
+                  setIsNotificationOpen((p) => !p);
+                  navigate("/notifications");
+                }}
+                className="p-1 ml-auto text-gray-400 bg-gray-800 rounded-full hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+              >
                 <span className="sr-only">View notifications</span>
                 {/* Heroicon name: outline/bell */}
                 <svg
                   className="w-6 h-6"
                   xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
+                  fill={newNotificationCame ? "#10B981" : "none"}
                   viewBox="0 0 24 24"
-                  stroke="currentColor"
+                  stroke={newNotificationCame ? "#10B981" : "currentColor"}
                   aria-hidden="true"
                 >
                   <path
