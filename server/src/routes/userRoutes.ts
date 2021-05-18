@@ -15,6 +15,8 @@ router.get("/friends/find", UserController.findFriends);
 router.post("/logout", UserController.logout);
 router.post("/requests/send", UserController.sendFriendRequest);
 router.post("/requests/accept", UserController.acceptRequest);
+router.post("/requests/reject", UserController.rejectRequest);
+router.post("/requests/delete", UserController.deleteRequest);
 router.get("/requests/list", UserController.listFriendRequests);
 router.get("/friends", UserController.listFriends);
 router.post("/messages/prev", UserController.getPreviousMessages);

@@ -296,6 +296,38 @@ class UserController {
     if (!room) return res.status(401).json({ error: ["UnAuthorized"] });
     return res.json({ messages: room.chat });
   }
+
+  public async deleteRequest(
+    req: ExpressRequest<{ id: string }>,
+    res: Response
+  ) {
+    if (!req.body.id) return res.json({ errors: ["Id required"] });
+    const request = await Request.findOne({
+      recieverId: req.body.id,
+      senderId: req.session.qid,
+    });
+    if (!request) {
+      return res.json({ error: ["request not found"] });
+    }
+    await request.remove();
+    return res.json({ success: true });
+  }
+
+  public async rejectRequest(
+    req: ExpressRequest<{ id: string }>,
+    res: Response
+  ) {
+    if (!req.body.id) return res.json({ errors: ["Id required"] });
+    const request = await Request.findOne({
+      recieverId: req.session.qid,
+      senderId: req.body.id,
+    });
+    if (!request) {
+      return res.json({ error: ["request not found"] });
+    }
+    await request.remove();
+    return res.json({ success: true });
+  }
 }
 
 export default new UserController();

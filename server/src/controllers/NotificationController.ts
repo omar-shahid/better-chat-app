@@ -7,9 +7,9 @@ class NotificationController {
   public async getNotifications(req: ExpressRequest, res: Response) {
     const notifications = await Notification.find({
       users: { $in: [new ObjectID(req.session.qid)] },
-    });
-    //   .sort({ date: -1 })
-    //   .exec();
+    })
+      .sort({ createdAt: -1 })
+      .exec();
 
     res.json({ notifications });
   }

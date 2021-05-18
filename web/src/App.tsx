@@ -7,13 +7,12 @@ import Loader from "./components/Loader";
 import { persistor, store } from "./global/store";
 import WebRoutes from "./routes/WebRoutes";
 
+export const queryClient = new QueryClient();
 const App: React.FC = () => {
-  const client = new QueryClient();
-
   return (
     <ReduxProvider store={store}>
       <PersistGate persistor={persistor} loading={<Loader />}>
-        <QueryClientProvider client={client}>
+        <QueryClientProvider client={queryClient}>
           <ErrorBoundry>
             <WebRoutes />
           </ErrorBoundry>

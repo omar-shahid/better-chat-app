@@ -56,6 +56,12 @@ export const api = {
         .post(`${USER_API_URL}/requests/accept`, { id })
         .then((res) => res.data),
 
+    rejectRequest: (id: string) =>
+      apiClient.post(`/user/requests/reject`, { id }).then((res) => res.data),
+
+    deleteRequest: (id: string) =>
+      apiClient.post(`/user/requests/delete`, { id }).then((res) => res.data),
+
     listFriends: () =>
       apiClient
         .get<null, AxiosResponse<findFriends>>(`${USER_API_URL}/friends`)

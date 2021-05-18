@@ -1,8 +1,10 @@
 import React from "react";
 import { useQuery } from "react-query";
+import { useNavigate } from "react-router";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { api } from "../api";
+import { queryClient } from "../App";
 import MainLayout from "../layouts/Main";
 
 interface Props {}
@@ -10,6 +12,7 @@ interface Props {}
 const RequestsPage: React.FC<Props> = () => {
   const { data } = useQuery("requests", api.friends.listRequests);
   const modal = withReactContent(Swal);
+  const navigate = useNavigate();
   type modalParams = Parameters<typeof modal>[0];
   const success: (s: string) => modalParams = (s: string) => ({
     title: <h1>Congratulations!</h1>,
@@ -20,10 +23,10 @@ const RequestsPage: React.FC<Props> = () => {
       <div className="flex flex-col">
         <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <h1 className="text-2xl ">Sent Requests</h1>
-            <br />
-            <div className="m-10 overflow-hidden border-b border-gray-200 shadow sm:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="m-2 mt-6 overflow-hidden border-b border-gray-200 md:m-10 sm:rounded-lg">
+              <h1 className="text-2xl ">Sent Requests</h1>
+              <br />
+              <table className="min-w-full divide-y divide-gray-200 shadow ">
                 <thead className="bg-gray-50">
                   <tr>
                     <th
@@ -59,7 +62,16 @@ const RequestsPage: React.FC<Props> = () => {
                       </td>
 
                       <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                        <button className="p-3 text-green-100 bg-red-500 hover:bg-red-700">
+                        <button
+                          onClick={() =>
+                            api.friends
+                              .rejectRequest(user._id as string)
+                              .then(() => {
+                                queryClient.invalidateQueries("requests");
+                              })
+                          }
+                          className="p-3 text-green-100 bg-red-500 hover:bg-red-700"
+                        >
                           Delete Request
                         </button>
                       </td>
@@ -76,9 +88,9 @@ const RequestsPage: React.FC<Props> = () => {
       <div className="flex flex-col">
         <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <h1 className="text-2xl ">Recieved Requests</h1>
-            <div className="m-10 overflow-hidden border-b border-gray-200 shadow sm:rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="m-2 mt-6 overflow-hidden border-b border-gray-200 md:m-10 sm:rounded-lg">
+              <h1 className="text-2xl ">Recieved Requests</h1>
+              <table className="min-w-full divide-y divide-gray-200 shadow ">
                 <thead className="bg-gray-50">
                   <tr>
                     <th
@@ -113,12 +125,16 @@ const RequestsPage: React.FC<Props> = () => {
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                      <td className="flex flex-col px-6 py-4 text-sm font-medium text-right whitespace-nowrap md:block">
                         <button
                           onClick={() =>
                             api.friends
                               .acceptRequest(user._id)
-                              .then(() => modal.fire(success(user.name)))
+                              .then(() =>
+                                modal.fire(success(user.name)).then(() => {
+                                  navigate(`/chat/${user._id}`);
+                                })
+                              )
                               .catch(() => modal.fire(success("SF Error")))
                           }
                           className="p-3 text-green-100 bg-green-500 hover:bg-green-700"
@@ -126,8 +142,17 @@ const RequestsPage: React.FC<Props> = () => {
                           Accept Request
                         </button>
 
-                        <button className="p-3 text-green-100 bg-red-500 hover:bg-red-700">
-                          Delete Request
+                        <button
+                          onClick={() => {
+                            api.friends
+                              .rejectRequest(user._id as string)
+                              .then(() => {
+                                queryClient.invalidateQueries("requests");
+                              });
+                          }}
+                          className="p-3 text-green-100 bg-red-500 hover:bg-red-700"
+                        >
+                          Reject Request
                         </button>
                       </td>
                     </tr>
