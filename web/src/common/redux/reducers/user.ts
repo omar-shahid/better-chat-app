@@ -5,6 +5,7 @@ export type UserState = {
   name: string;
   email: string;
   id: string;
+  token: string;
 };
 
 const initialState: UserState = {
@@ -12,6 +13,7 @@ const initialState: UserState = {
   email: "",
   isLoggedIn: false,
   id: "",
+  token: "",
 };
 
 export const userSlice = createSlice({

@@ -1,10 +1,10 @@
 import { AxiosResponse } from "axios";
-import apiClient from "../../api/apiClient";
+import { secureApiClient } from "../../api/apiClient";
 import { Message } from "../../types";
 
 export const chatAPI = {
   getPrevMessages: (friendUserId: string) =>
-    apiClient
+    secureApiClient
       .post<{ friendUserId: string }, AxiosResponse<{ messages: Message[] }>>(
         "/user/messages/prev",
         { friendUserId }
