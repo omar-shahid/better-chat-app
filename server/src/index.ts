@@ -12,11 +12,19 @@ import "./models/Friend";
 import notificationRoutes from "./routes/notificationRoutes";
 import userRoutes from "./routes/userRoutes";
 import { EventClassConstructor } from "./types";
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({ path: path.join(__dirname, "../.env") });
 
 const MONGODB_URL = "mongodb://localhost:27017/better-chat-app";
 mongoose.connect(MONGODB_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+});
+
+export const sessionStore = MongoStore.create({
+  mongoUrl: MONGODB_URL,
 });
 
 const session = expressSession({
@@ -30,12 +38,10 @@ const session = expressSession({
     secure: false,
     httpOnly: true,
   },
-  store: MongoStore.create({
-    mongoUrl: MONGODB_URL,
-  }),
+  store: sessionStore,
 });
 
-const whitelist = ["http://localhost:3000", "http://192.168.2.104:3000"];
+const whitelist = ["http://localhost:3000"];
 
 const corsConfig: cors.CorsOptions = {
   origin: function (origin, callback) {
@@ -74,7 +80,7 @@ const io = new Server(server, { cors: corsConfig });
 // Attaching io to express app
 app.io = io;
 app.sessionQIDtoSocketMap = {};
-io.use(sharedSession(session));
+io.use(sharedSession(session, { autoSave: true }));
 // io.use(socketIoLogger());
 io.on("connection", (socket: Socket) => {
   // console.log(socket.id, "connected");

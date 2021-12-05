@@ -8,6 +8,7 @@ import Request from "../models/Request";
 import Room from "../models/Room";
 import User from "../models/User";
 import { ExpressRequest } from "../types";
+import { createToken } from "../utils/createToken";
 import {
   loginInputType,
   loginInputValidator,
@@ -57,9 +58,10 @@ class UserController {
         return res.status(422).json({ errors: ["Invalid email or password"] });
       if (!(await argon2.verify(user.password, input.password)))
         return res.status(422).json({ errors: ["Invalid email or password"] });
-      req.session.qid = user.id;
+      const token = createToken({ id: user.id });
       return res.json({
         success: true,
+        token,
       });
     } catch (e) {
       if (e.errors)
@@ -79,7 +81,7 @@ class UserController {
     const user = await User.findById(userId).select(
       "-rooms -password -requests -friends -socket"
     );
-    res.json({ profile: user });
+    res.json({ profile: user, sid: req.sessionID });
   }
 
   public async rooms(req: ExpressRequest, res: Response) {
@@ -159,7 +161,7 @@ class UserController {
 
     await notification.save();
     req.app.io
-      .to(req.app.sessionQIDtoSocketMap[secondUser.id])
+      .to(secondUser.socket ?? "")
       .emit("notification:new", notification);
 
     return res.json({ success: true });
@@ -252,7 +254,7 @@ class UserController {
 
     await notification.save();
     req.app.io
-      .to(req.app.sessionQIDtoSocketMap[secondUser.id])
+      .to(secondUser.socket ?? "")
       .emit("notification:new", notification);
 
     return res.json({ success: true });

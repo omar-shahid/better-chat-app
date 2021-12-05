@@ -2,13 +2,7 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "lib": [
-      "dom",
-      "es6",
-      "es2017",
-      "esnext.asynciterable",
-      "ES2019"
-    ],
+    "lib": ["dom", "es6", "es2017", "esnext.asynciterable", "ES2019"],
     "sourceMap": true,
     "outDir": "./dist",
     "moduleResolution": "node",
@@ -26,12 +20,8 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
+    "typeRoots": ["./node_modules/@types", "./src/custom.d.ts", "./src/n.d.ts"]
   },
-  "exclude": [
-    "node_modules"
-  ],
-  "include": [
-    "./src/**/*.tsx",
-    "./src/**/*.ts"
-  ]
+  "exclude": ["node_modules"],
+  "include": ["./src/**/*.tsx", "./src/**/*.ts"]
 }

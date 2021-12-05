@@ -2,7 +2,7 @@ import "express-session";
 import { Server } from "socket.io";
 
 declare global {
-  declare module Express {
+  module Express {
     export interface Application {
       io: Server;
       sessionQIDtoSocketMap: Record<string, string>;
@@ -13,5 +13,11 @@ declare global {
 declare module "express-session" {
   interface SessionData {
     qid: string;
+  }
+}
+
+declare namespace NodeJS {
+  export interface ProcessEnv {
+    JWT_SECRET: string;
   }
 }

@@ -1,6 +1,8 @@
 import { Application } from "express";
+import { Session, SessionData } from "express-session";
 import { ObjectID } from "mongodb";
 import { Server, Socket } from "socket.io";
+import { sessionStore } from "..";
 import Room from "../models/Room";
 import User from "../models/User";
 import { EventClass } from "../types";
@@ -11,6 +13,7 @@ class UserEvents implements EventClass {
   app: Application;
   qid: string;
   io: Server;
+  session: Session & Partial<SessionData>;
   events = {
     greet: this.Greet.bind(this),
     initiateChat: this.InitiateChat.bind(this),
@@ -24,28 +27,49 @@ class UserEvents implements EventClass {
     this.app = app;
     this.name = "user";
     this.io = io;
+
+    this.session = (this.socket.handshake as any).session;
   }
   public Greet() {
     this.socket?.emit("an", "Coming from socket!");
   }
-  public async InitiateChat(id: string) {
-    if (!this.qid) {
-      return this.socket.emit("notLoggedIn");
-    }
-    const room = await Room.findOne({
-      users: { $all: [new ObjectID(this.qid), new ObjectID(id)] },
+  private async getQid(sid: string): Promise<SessionData | any> {
+    return new Promise((resolve, reject) => {
+      sessionStore.get(sid, (err, data) => {
+        if (err) {
+          console.log(err);
+          reject(err);
+        }
+        resolve(data?.qid);
+      });
     });
-    if (!room) return this.socket.emit("roomNotFound");
+  }
+  public async InitiateChat(id: string) {
+    await this.session.reload(async (err) => {
+      if (err) console.log(err);
+      if (!this.session.qid) {
+        return this.socket.emit("notLoggedIn");
+      }
+      const room = await Room.findOne({
+        users: { $all: [new ObjectID(this.session.qid), new ObjectID(id)] },
+      });
+      if (!room) return this.socket.emit("roomNotFound");
 
-    this.socket.join(room.name);
-    return this.io.to(this.socket.id).emit("roomIdSuccess", room.id);
+      this.socket.join(room.name);
+      return this.io.to(this.socket.id).emit("roomIdSuccess", room.id);
+    });
   }
 
-  public async registerUserSocket() {
-    if (!this.qid) {
+  public async registerUserSocket(sid: string) {
+    const qid = await this.getQid(sid);
+    if (!qid) {
       return this.socket.emit("notLoggedIn");
     }
-    const currUser = await User.findById(this.qid);
+    this.session.qid = qid;
+    this.session.save();
+
+    console.log("SESSION", this.session);
+    const currUser = await User.findById(this.session.qid);
     if (!currUser) {
       return this.socket.emit("notLoggedIn");
     }
@@ -55,13 +79,13 @@ class UserEvents implements EventClass {
   }
 
   public async sendMessage(roomId: string, message: string) {
-    if (!this.qid) {
+    if (!this.session.qid) {
       return this.socket.emit("notLoggedIn");
     }
     const room = await Room.findById(roomId);
     if (!room) return this.socket.emit("roomNotFound");
     const newMessage = {
-      sender: new ObjectID(this.qid),
+      sender: new ObjectID(this.session.qid),
       message,
       createdAt: new Date(),
     };
