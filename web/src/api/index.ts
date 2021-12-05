@@ -1,17 +1,15 @@
 /* eslint-disable import/first */
 import { AxiosResponse } from "axios";
-import {
-  findFriends,
-  Message,
-  Notification,
-  RequestList,
-  User,
-} from "../types";
+import { authAPI } from "../modules/auth/auth.api";
+import { chatAPI } from "../modules/chat/chat.api";
+import { friendsAPI } from "../modules/friends/Friends.api";
+import { NotificationAPI } from "../modules/notification/Notification.api";
+import { findFriends, Message, Notification, RequestList } from "../types";
 import apiClient from "./apiClient";
 
-const USER_API_URL = `/user`;
+export const USER_API_URL = `/user`;
 
-type registerInput = {
+export type registerInput = {
   name: string;
   email: string;
   password: string;
@@ -21,66 +19,8 @@ type registerInput = {
 export type loginInputData = Pick<registerInput, "email" | "password">;
 
 export const api = {
-  user: {
-    register: (data: registerInput) =>
-      apiClient.post(`${USER_API_URL}/register`, data).then((res) => res.data),
-
-    login: (data: loginInputData) =>
-      apiClient.post(`${USER_API_URL}/login`, data).then((res) => res.data),
-    profile: () =>
-      apiClient
-        .get<null, AxiosResponse<{ profile: User }>>(`${USER_API_URL}/profile`)
-        .then((res) => res.data),
-
-    logout: () =>
-      apiClient.post(`${USER_API_URL}/logout`).then((res) => res.data),
-  },
-  friends: {
-    findFriends: () =>
-      apiClient
-        .get<null, AxiosResponse<findFriends>>(`${USER_API_URL}/friends/find`)
-        .then((res) => res.data),
-
-    listRequests: () =>
-      apiClient
-        .get<null, AxiosResponse<RequestList>>(`${USER_API_URL}/requests/list`)
-        .then((res) => res.data),
-
-    sendRequest: (id: string) =>
-      apiClient
-        .post(`${USER_API_URL}/requests/send`, { id })
-        .then((res) => res.data),
-
-    acceptRequest: (id: string) =>
-      apiClient
-        .post(`${USER_API_URL}/requests/accept`, { id })
-        .then((res) => res.data),
-
-    rejectRequest: (id: string) =>
-      apiClient.post(`/user/requests/reject`, { id }).then((res) => res.data),
-
-    deleteRequest: (id: string) =>
-      apiClient.post(`/user/requests/delete`, { id }).then((res) => res.data),
-
-    listFriends: () =>
-      apiClient
-        .get<null, AxiosResponse<findFriends>>(`${USER_API_URL}/friends`)
-        .then((res) => res.data),
-
-    getPrevMessages: (friendUserId: string) =>
-      apiClient
-        .post<{ friendUserId: string }, AxiosResponse<{ messages: Message[] }>>(
-          "/user/messages/prev",
-          { friendUserId }
-        )
-        .then((res) => res.data),
-  },
-  notifications: {
-    getAllNotifications: () =>
-      apiClient
-        .get<null, AxiosResponse<{ notifications: Notification[] }>>(
-          "/notifications"
-        )
-        .then((res) => res.data),
-  },
+  auth: authAPI,
+  friends: friendsAPI,
+  notifications: NotificationAPI,
+  chat: chatAPI,
 };

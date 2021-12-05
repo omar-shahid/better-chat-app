@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.emoji-picker-react {
+  position: absolute !important;
+  top: -20rem;
+  left: -6rem;
+}
+.message img {
+  display: inline-block;
+}
+.message a {
+  text-decoration: underline;
+}
+@media screen and (max-width: 600px) {
+  .emoji-picker-react {
+    position: absolute !important;
+    left: -13rem !important;
+  }
+}

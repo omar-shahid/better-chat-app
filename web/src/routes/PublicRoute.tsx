@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { Navigate, Route, useSearchParams } from "react-router-dom";
-import { RootState } from "../global/store";
+import { RootState } from "../common/redux/store";
 
 interface Props {
   caseSensitive?: boolean;

@@ -1,3 +1,5 @@
+import { RouteProps } from "react-router";
+
 type Friend = {
   roomId: string;
   userId: string;
@@ -31,10 +33,14 @@ export type Message = {
 
 export interface Notification {
   _id: string;
-  users: User;
+  users: User[];
   details: {
     type: string;
     userInteracted: User;
   };
   message: string;
+}
+
+export interface RouteConfig extends RouteProps {
+  authProtected?: boolean;
 }

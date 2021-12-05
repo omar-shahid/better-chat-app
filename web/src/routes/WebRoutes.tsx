@@ -1,23 +1,17 @@
+import cl from "classnames";
 import React, { useEffect } from "react";
 import { useQuery } from "react-query";
 import { useSelector } from "react-redux";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { api } from "../api";
-import { RootState } from "../global/store";
-import ChatPage from "../pages/Chat";
-import DashboardPage from "../pages/Dashboard";
-import FindFriendsPage from "../pages/FindFriends";
-import FriendsPage from "../pages/Friends";
-import Home from "../pages/Home";
-import LoginPage from "../pages/Login";
-import Notifications from "../pages/Notifications";
-import ProfilePage from "../pages/Profile";
-import RegisterPage from "../pages/Register";
-import RequestsPage from "../pages/Requests";
-import { socket } from "../socket";
+import Navbar from "../common/components/Navbar";
+import { RootState } from "../common/redux/store";
+import Home from "../modules/showcase/Home.page";
+import { socket } from "../common/lib/socket";
 import { Message } from "../types";
 import { PublicRoute } from "./PublicRoute";
 import { UserRoute } from "./UserRoute";
+import { allRoutes } from "./allRoutes";
 
 const chatAudioURL = "/audio/notify.mp3";
 
@@ -26,39 +20,39 @@ chatAudio.crossOrigin = "anonymous";
 
 const WebRoutes: React.FC = () => {
   const user = useSelector((store: RootState) => store.user);
-  const { data } = useQuery("friends", api.friends.listFriends, {
-    enabled: user.isLoggedIn,
+  const settings = useSelector((store: RootState) => store.settings);
+  const { refetch } = useQuery("friends", api.friends.listFriends, {
+    enabled: false,
   }); //
   useEffect(() => {
-    if (user.isLoggedIn && data?.length)
-      data.forEach((friend) => {
-        socket.emit("user:initiateChat", friend._id);
-      });
-  }, [data, user.isLoggedIn]);
+    if (user.isLoggedIn)
+      refetch().then((data) =>
+        data?.data?.forEach((friend) => {
+          socket.emit("user:initiateChat", friend._id);
+        })
+      );
+  }, [refetch, user.isLoggedIn]);
 
   useEffect(() => {
     socket.on("user:incomingMessage", (message: Message) => {
-      if (message.sender !== user.id) chatAudio.play();
+      if (message.sender !== user.id)
+        chatAudio.play().catch((e) => console.log("Audio Error", e));
     });
-  }, [user.id]);
+  }, [user]);
 
   return (
-    <>
+    <div className={cl("h-screen", { "bg-gray-900": settings.isDarkbg })}>
       <BrowserRouter>
+        <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <PublicRoute path="/register" element={<RegisterPage />} />
-          <PublicRoute path="/login" element={<LoginPage />} />
-          <UserRoute path="/dashboard" element={<DashboardPage />} />
-          <UserRoute path="/friends/find" element={<FindFriendsPage />} />
-          <UserRoute path="/profile" element={<ProfilePage />} />
-          <UserRoute path="/requests" element={<RequestsPage />} />
-          <UserRoute path="/friends" element={<FriendsPage />} />
-          <UserRoute path="/chat/:id" element={<ChatPage />} />
-          <UserRoute path="/notifications" element={<Notifications />} />
+          {allRoutes.map((route) => {
+            const Component = route.authProtected ? UserRoute : PublicRoute;
+            return <Component path={route.path} element={route.element} />;
+          })}
         </Routes>
       </BrowserRouter>
-    </>
+    </div>
   );
 };
 export default WebRoutes;

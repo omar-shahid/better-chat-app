@@ -1,6 +1,6 @@
 import axios from "axios";
-import { userActions } from "./../global/reducers/user";
-import { store } from "./../global/store";
+import { userActions } from "../common/redux/reducers/user";
+import { store } from "../common/redux/store";
 
 const API_URL = `${
   process.env.REACT_APP_PROD_API_URL ?? process.env.REACT_APP_BACKEND_URL
