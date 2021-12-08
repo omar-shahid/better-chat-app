@@ -7,13 +7,19 @@ export const isAuthenticated = (
   res: Response,
   next: NextFunction
 ) => {
-  if (
-    !jwt.verify(
-      req.headers["authorization"]?.slice("Bearer ".length) ?? "",
-      process.env.JWT_TOKEN ?? ""
+  try {
+    if (
+      !jwt.verify(
+        req.headers["authorization"]?.slice("Bearer ".length) ?? "",
+        process.env.JWT_SECRET ?? ""
+      )
     )
-  )
-    return res.status(401).json({ errors: ["Un Authorized"] });
+      return res.status(401).json({ errors: ["Un Authorized"] });
 
-  return next();
+    return next();
+  } catch (e) {
+    return res
+      .status(401)
+      .json({ errors: ["Un Authorized or token not provided"] });
+  }
 };

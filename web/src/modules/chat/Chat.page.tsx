@@ -53,7 +53,7 @@ const ChatPage: React.FC = () => {
     socket.on("user:incomingMessage", (message: Message) => {
       setMessages((p) => p.concat(message));
     });
-  }, [user.id]);
+  }, [user.profile.id]);
 
   useEffect(() => {
     dispatch(settingsActions.setDarkBg(true));
@@ -72,7 +72,7 @@ const ChatPage: React.FC = () => {
           <div className="container mx-auto">
             {messages.map((msg) => (
               <Fragment key={msg.createdAt}>
-                {user.id === msg.sender ? (
+                {user.profile.id === msg.sender ? (
                   <>
                     <div
                       className="p-6 mb-2 ml-auto text-white break-all bg-gray-900 rounded-lg message bg-opacity-80"

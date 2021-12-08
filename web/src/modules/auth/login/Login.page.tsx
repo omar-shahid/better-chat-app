@@ -20,7 +20,11 @@ const LoginPage: React.FC<Props> = () => {
   // REACT
   const [errors, setErrors] = useState<string[]>([]);
   const login = useMutation((val: loginInputData) =>
-    authAPI.login(val).then(() => authAPI.profile())
+    // TODO: CHANGE THE LOGIC TO SAVE TOKEN IN STORE ALONG WITH USER PROFILE
+    authAPI
+      .login(val)
+      .then(({ token }) => dispatch(userActions.logIn({ token })))
+      .then(() => authAPI.profile())
   );
 
   //REACT ROUTER DOM
@@ -52,8 +56,7 @@ const LoginPage: React.FC<Props> = () => {
                 .then(({ profile, sid }) => {
                   socket.emit("user:registerUserSocket", sid);
                   dispatch(
-                    userActions.logIn({
-                      isLoggedIn: true,
+                    userActions.setUserProfile({
                       name: profile.name,
                       email: profile.email,
                       id: profile._id,

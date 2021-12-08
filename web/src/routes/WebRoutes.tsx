@@ -25,17 +25,17 @@ const WebRoutes: React.FC = () => {
     enabled: false,
   }); //
   useEffect(() => {
-    if (user.isLoggedIn)
+    if (user.token)
       refetch().then((data) =>
         data?.data?.forEach((friend) => {
           socket.emit("user:initiateChat", friend._id);
         })
       );
-  }, [refetch, user.isLoggedIn]);
+  }, [refetch, user.token]);
 
   useEffect(() => {
     socket.on("user:incomingMessage", (message: Message) => {
-      if (message.sender !== user.id)
+      if (message.sender !== user.profile.id)
         chatAudio.play().catch((e) => console.log("Audio Error", e));
     });
   }, [user]);

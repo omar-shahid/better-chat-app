@@ -11,12 +11,12 @@ interface Props {
 }
 
 export const PublicRoute: React.FC<Props> = ({ element, ...rest }) => {
-  const { isLoggedIn } = useSelector((store: RootState) => store.user);
+  const { token } = useSelector((store: RootState) => store.user);
   const [params] = useSearchParams();
   return (
     <Route
       element={
-        !isLoggedIn ? (
+        !token ? (
           element
         ) : (
           <Navigate to={`/${params.get("return-url") ?? "dashboard"}`} />

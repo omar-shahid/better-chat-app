@@ -227,7 +227,7 @@ const Navbar: React.FC<Props> = () => {
       </div>
     </div>
   );
-  if (!user.isLoggedIn)
+  if (!user.token)
     sideNav = (
       <div className="flex items-baseline ml-10 space-x-4">
         {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
@@ -267,7 +267,7 @@ const Navbar: React.FC<Props> = () => {
               <div className="hidden md:block">
                 <div
                   className={cl("flex items-baseline ml-10 space-x-4", {
-                    hidden: !user.isLoggedIn,
+                    hidden: !user.token,
                   })}
                 >
                   {mainNav.map((link) => (
@@ -285,7 +285,7 @@ const Navbar: React.FC<Props> = () => {
             <div className="hidden md:block"></div>
             <div
               className={cl("flex mr-2 md:hidden", {
-                hidden: !user.isLoggedIn,
+                hidden: !user.token,
               })}
             >
               {/* Mobile menu button */}
@@ -365,10 +365,10 @@ const Navbar: React.FC<Props> = () => {
               </div>
               <div className="ml-3">
                 <div className="text-base font-medium leading-none text-white">
-                  {user.name}
+                  {user.profile.name}
                 </div>
                 <div className="text-sm font-medium leading-none text-gray-400">
-                  {user.email}
+                  {user.profile.email}
                 </div>
               </div>
               <button

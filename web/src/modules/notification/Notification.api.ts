@@ -3,11 +3,10 @@ import { secureApiClient } from "../../api/apiClient";
 import { Notification } from "../../types";
 
 export const NotificationAPI = {
-  getAllNotifications: () => {
-    return secureApiClient
+  getAllNotifications: () =>
+    secureApiClient
       .get<null, AxiosResponse<{ notifications: Notification[] }>>(
         "/notifications"
       )
-      .then((res) => res.data);
-  },
+      .then((res) => res.data),
 };

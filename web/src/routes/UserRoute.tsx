@@ -11,15 +11,11 @@ interface Props {
 }
 
 export const UserRoute: React.FC<Props> = ({ element, ...rest }) => {
-  const { isLoggedIn } = useSelector((store: RootState) => store.user);
+  const { token } = useSelector((store: RootState) => store.user);
   return (
     <Route
       element={
-        isLoggedIn ? (
-          element
-        ) : (
-          <Navigate to={`/login?return-url=${rest.path}`} />
-        )
+        token ? element : <Navigate to={`/login?return-url=${rest.path}`} />
       }
       {...rest}
     />

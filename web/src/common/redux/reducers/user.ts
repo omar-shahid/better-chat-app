@@ -1,18 +1,20 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export type UserState = {
-  isLoggedIn: boolean;
-  name: string;
-  email: string;
-  id: string;
+  profile: {
+    name: string;
+    email: string;
+    id: string;
+  };
   token: string;
 };
 
 const initialState: UserState = {
-  name: "",
-  email: "",
-  isLoggedIn: false,
-  id: "",
+  profile: {
+    name: "",
+    email: "",
+    id: "",
+  },
   token: "",
 };
 
@@ -20,7 +22,12 @@ export const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    logIn: (_, action: PayloadAction<UserState>) => action.payload,
+    logIn: (state, action: PayloadAction<{ token: string }>) => {
+      state.token = action.payload.token;
+    },
+    setUserProfile: (state, action: PayloadAction<UserState["profile"]>) => {
+      state.profile = action.payload;
+    },
     logout: () => initialState,
   },
 });

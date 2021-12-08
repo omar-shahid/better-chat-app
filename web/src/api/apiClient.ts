@@ -8,24 +8,16 @@ const API_URL = `${
 
 const apiClient = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
 });
-apiClient.interceptors.response.use(
-  (response) => response,
-  (err) => {
-    if (err.response.status === 401) {
-      store.dispatch(userActions.logout());
-    }
-    return Promise.reject(err);
-  }
-);
 
 export const secureApiClient = axios.create({
-  headers: {
-    authorization: `Bearer ${store.getState().user.token}`,
-  },
+  baseURL: API_URL,
 });
 
+secureApiClient.interceptors.request.use((config) => {
+  config.headers.authorization = `Bearer ${store.getState().user.token}`;
+  return config;
+});
 secureApiClient.interceptors.response.use(
   (response) => response,
   (err) => {
