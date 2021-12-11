@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios";
 import { registerInput, USER_API_URL, loginInputData } from "../../api";
-import apiClient from "../../api/apiClient";
+import apiClient, { secureApiClient } from "../../api/apiClient";
 import { User } from "../../types";
 
 export const authAPI = {
@@ -10,12 +10,12 @@ export const authAPI = {
   login: (data: loginInputData) =>
     apiClient.post(`${USER_API_URL}/login`, data).then((res) => res.data),
   profile: () =>
-    apiClient
+    secureApiClient
       .get<null, AxiosResponse<{ profile: User; sid: string }>>(
         `${USER_API_URL}/profile`
       )
       .then((res) => res.data),
 
   logout: () =>
-    apiClient.post(`${USER_API_URL}/logout`).then((res) => res.data),
+    secureApiClient.post(`${USER_API_URL}/logout`).then((res) => res.data),
 };

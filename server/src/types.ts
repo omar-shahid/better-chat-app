@@ -7,7 +7,7 @@ export enum Events {
 }
 
 export interface EventClassConstructor {
-  new (socket: Socket, app: Application, io:Server): EventClass;
+  new (socket: Socket, app: Application, io: Server): EventClass;
 }
 export interface EventClass {
   events: Record<string, (...args: any[]) => void>;
@@ -19,3 +19,14 @@ export type ExpressRequest<
   ReqQuery = qs.ParsedQs,
   P = any
 > = Request<P, {}, ReqBody, ReqQuery>;
+
+export interface DecodedToken {
+  id: string;
+  socketID: string;
+}
+
+export interface SocketWithData extends Socket {
+  data: {
+    decodedToken: DecodedToken;
+  };
+}

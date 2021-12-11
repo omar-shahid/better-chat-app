@@ -76,23 +76,23 @@ class UserController {
   }
 
   public async profile(req: ExpressRequest, res: Response) {
-    const userId = req.session.qid;
+    const userId = req.decodedToken.id;
 
     const user = await User.findById(userId).select(
       "-rooms -password -requests -friends -socket"
     );
-    res.json({ profile: user, sid: req.sessionID });
+    res.json({ profile: user });
   }
 
   public async rooms(req: ExpressRequest, res: Response) {
-    const userId = req.session.qid;
+    const userId = req.decodedToken.id;
 
     const rooms = await User.findById(userId).select("rooms -_id");
     res.json({ rooms: rooms });
   }
 
   public async findFriends(req: ExpressRequest, res: Response) {
-    const userId = req.session.qid;
+    const userId = req.decodedToken.id;
 
     const currUser = await User.findById(userId, "friends")
       .populate("friends", "users")
@@ -110,26 +110,23 @@ class UserController {
     res.json(users);
   }
 
-  public logout(req: ExpressRequest, res: Response) {
-    req.session.destroy((err) => {
-      res.clearCookie("qid");
-      if (err) console.log(err);
-      res.json({ success: true });
-    });
+  public logout(_: ExpressRequest, res: Response) {
+    res.json({ success: true });
   }
 
   public async sendFriendRequest(
     req: ExpressRequest<{ id: string }>,
     res: Response
   ) {
-    const { qid } = req.session;
-    const { id } = req.body;
-    if (!id || !qid) return res.status(400).json({ errors: ["Ids requried"] });
-    const currUser = await User.findById(qid);
-    const secondUser = await User.findById(id);
+    const userId = req.decodedToken.id;
+    const { id: otherUserId } = req.body;
+    if (!userId || !otherUserId)
+      return res.status(400).json({ errors: ["Ids requried"] });
+    const currUser = await User.findById(userId);
+    const secondUser = await User.findById(otherUserId);
 
     if (!currUser || !secondUser)
-      return res.status(400).json({ errors: ["Ids requried"] });
+      return res.status(400).json({ errors: ["Invalid Ids"] });
 
     const isRequestExists = await Request.findOne({
       senderId: currUser?.id,
@@ -169,7 +166,7 @@ class UserController {
 
   public async listFriendRequests(req: ExpressRequest, res: Response) {
     const sentRequests = await Request.find({
-      senderId: new ObjectId(req.session.qid),
+      senderId: new ObjectId(req.decodedToken.id),
     });
     const sentRequestUsers = await Promise.all(
       sentRequests.map(async (request) =>
@@ -179,7 +176,7 @@ class UserController {
     console.log(sentRequestUsers);
 
     const recievedRequests = await Request.find({
-      recieverId: new ObjectId(req.session.qid),
+      recieverId: new ObjectId(req.decodedToken.id),
     });
 
     const recievedRequestUsers = await Promise.all(
@@ -199,7 +196,7 @@ class UserController {
     res: Response
   ) {
     const { id } = req.body;
-    const { qid } = req.session;
+    const { id: qid } = req.decodedToken;
     if (!id || !qid) return res.status(400).json({ errors: ["Ids requried"] });
     const currUser = await User.findById(qid);
     const secondUser = await User.findById(id);
@@ -261,7 +258,7 @@ class UserController {
   }
 
   public async listFriends(req: ExpressRequest, res: Response) {
-    const { qid } = req.session;
+    const { id: qid } = req.decodedToken;
     const friends = await User.findById(qid)
       .select("friends -_id")
       .populate("friends", "users -_id")
@@ -290,7 +287,7 @@ class UserController {
     const room = await Room.findOne({
       users: {
         $all: [
-          new ObjectID(req.session.qid),
+          new ObjectID(req.decodedToken.id),
           new ObjectID(req.body.friendUserId),
         ],
       },
@@ -306,7 +303,7 @@ class UserController {
     if (!req.body.id) return res.json({ errors: ["Id required"] });
     const request = await Request.findOne({
       recieverId: req.body.id,
-      senderId: req.session.qid,
+      senderId: req.decodedToken.id,
     });
     if (!request) {
       return res.json({ error: ["request not found"] });
@@ -321,7 +318,7 @@ class UserController {
   ) {
     if (!req.body.id) return res.json({ errors: ["Id required"] });
     const request = await Request.findOne({
-      recieverId: req.session.qid,
+      recieverId: req.decodedToken.id,
       senderId: req.body.id,
     });
     if (!request) {

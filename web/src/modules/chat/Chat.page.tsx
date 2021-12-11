@@ -1,7 +1,13 @@
 import autosize from "autosize";
 import Picker from "emoji-picker-react";
 import { Formik } from "formik";
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 // @ts-ignore
 import ReactEmoji from "react-emoji";
 import Linkify from "react-linkify";
@@ -14,6 +20,8 @@ import { settingsActions } from "../../common/redux/reducers/settings";
 import { RootState, useAppDispatch } from "../../common/redux/store";
 import { socket } from "../../common/lib/socket";
 import { Message } from "../../types";
+
+socket.emit("greet");
 
 const ChatPage: React.FC = () => {
   const user = useSelector((store: RootState) => store.user);
@@ -32,10 +40,14 @@ const ChatPage: React.FC = () => {
 
   useEffect(() => {
     if (!id) return navigate("/");
-    socket.emit("user:initiateChat", id);
-    socket.on("roomIdSuccess", (id: string) => {
+    console.log({ id });
+    socket.emit("chat:initiate", id);
+    socket.on("room:IDSuccess", (id: string) => {
       console.log("Room ID", id);
       setRoomId(id);
+    });
+    socket.on("room:notFound", (s: any) => {
+      console.log("ROOM NOT FOUND", s);
     });
   }, [id, navigate]);
 
@@ -50,7 +62,7 @@ const ChatPage: React.FC = () => {
   }, [data?.messages]);
 
   useEffect(() => {
-    socket.on("user:incomingMessage", (message: Message) => {
+    socket.on("chat:incomingMessage", (message: Message) => {
       setMessages((p) => p.concat(message));
     });
   }, [user.profile.id]);
@@ -72,15 +84,20 @@ const ChatPage: React.FC = () => {
           <div className="container mx-auto">
             {messages.map((msg) => (
               <Fragment key={msg.createdAt}>
+                {console.log(
+                  user.profile.id === msg.sender,
+                  user.profile.id,
+                  msg.sender
+                )}
                 {user.profile.id === msg.sender ? (
-                  <>
+                  <React.Fragment key={msg.createdAt}>
                     <div
                       className="p-6 mb-2 ml-auto text-white break-all bg-gray-900 rounded-lg message bg-opacity-80"
                       style={{ maxWidth: "66.666667%" }}
                     >
                       <Linkify>{ReactEmoji.emojify(msg.message)}</Linkify>
                     </div>
-                  </>
+                  </React.Fragment>
                 ) : (
                   <div
                     className="p-6 mb-2 mr-auto text-gray-900 break-all bg-white rounded-lg message bg-opacity-80"
@@ -101,7 +118,7 @@ const ChatPage: React.FC = () => {
           onSubmit={(values, helpers) => {
             if (!values.message.trim()) return;
             socket
-              .emit("user:sendMessage", roomId, values.message)
+              .emit("chat:sendMessage", roomId, values.message)
               .emit("user:greet", (msg: string) => console.log(msg));
 
             helpers.resetForm();

@@ -20,7 +20,6 @@ const LoginPage: React.FC<Props> = () => {
   // REACT
   const [errors, setErrors] = useState<string[]>([]);
   const login = useMutation((val: loginInputData) =>
-    // TODO: CHANGE THE LOGIC TO SAVE TOKEN IN STORE ALONG WITH USER PROFILE
     authAPI
       .login(val)
       .then(({ token }) => dispatch(userActions.logIn({ token })))
@@ -53,8 +52,8 @@ const LoginPage: React.FC<Props> = () => {
             onSubmit={(values) =>
               login
                 .mutateAsync(values)
-                .then(({ profile, sid }) => {
-                  socket.emit("user:registerUserSocket", sid);
+                .then(({ profile }) => {
+                  socket.emit("auth:registerUserSocket");
                   dispatch(
                     userActions.setUserProfile({
                       name: profile.name,

@@ -3,7 +3,7 @@ import ChatPage from "./Chat.page";
 
 export const ChatRoutes: RouteConfig[] = [
   {
-    path: "/chat",
+    path: "/chat/:id",
     element: <ChatPage />,
     authProtected: true,
   },

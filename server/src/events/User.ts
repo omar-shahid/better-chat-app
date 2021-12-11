@@ -1,100 +1,51 @@
-import { Application } from "express";
-import { Session, SessionData } from "express-session";
+import jwt from "jsonwebtoken";
 import { ObjectID } from "mongodb";
-import { Server, Socket } from "socket.io";
-import { sessionStore } from "..";
+import { Server } from "socket.io";
 import Room from "../models/Room";
-import User from "../models/User";
-import { EventClass } from "../types";
+import { SocketWithData } from "../types";
 
-class UserEvents implements EventClass {
-  name: string;
-  socket: Socket;
-  app: Application;
-  qid: string;
-  io: Server;
-  session: Session & Partial<SessionData>;
-  events = {
-    greet: this.Greet.bind(this),
-    initiateChat: this.InitiateChat.bind(this),
-    sendMessage: this.sendMessage.bind(this),
-    registerUserSocket: this.registerUserSocket.bind(this),
-  };
-
-  constructor(socket: Socket, app: Application, io: Server) {
-    this.socket = socket;
-    this.qid = (this.socket.handshake as any).session.qid;
-    this.app = app;
-    this.name = "user";
-    this.io = io;
-
-    this.session = (this.socket.handshake as any).session;
-  }
-  public Greet() {
-    this.socket?.emit("an", "Coming from socket!");
-  }
-  private async getQid(sid: string): Promise<SessionData | any> {
-    return new Promise((resolve, reject) => {
-      sessionStore.get(sid, (err, data) => {
-        if (err) {
-          console.log(err);
-          reject(err);
-        }
-        resolve(data?.qid);
-      });
+export const userEvents = (io: Server, socket: SocketWithData) => {
+  async function initiateChatRoom(otherUserId: string) {
+    console.log(
+      "-------------------------------------------------- KFJSDKDFJDKF -------------------------------------------"
+    );
+    const room = await Room.findOne({
+      users: {
+        $all: [
+          new ObjectID(socket.data.decodedToken.id),
+          new ObjectID(otherUserId),
+        ],
+      },
     });
-  }
-  public async InitiateChat(id: string) {
-    await this.session.reload(async (err) => {
-      if (err) console.log(err);
-      if (!this.session.qid) {
-        return this.socket.emit("notLoggedIn");
-      }
-      const room = await Room.findOne({
-        users: { $all: [new ObjectID(this.session.qid), new ObjectID(id)] },
-      });
-      if (!room) return this.socket.emit("roomNotFound");
+    console.log(room);
+    if (!room) return socket.emit("room:notFound");
 
-      this.socket.join(room.name);
-      return this.io.to(this.socket.id).emit("roomIdSuccess", room.id);
-    });
+    socket.join(room.name);
+    return io.to(socket.id).emit("room:IDSuccess", room.id);
   }
 
-  public async registerUserSocket(sid: string) {
-    const qid = await this.getQid(sid);
-    if (!qid) {
-      return this.socket.emit("notLoggedIn");
-    }
-    this.session.qid = qid;
-    this.session.save();
+  async function registerUserSocket() {
+    const decodedToken = jwt.decode(socket.handshake.auth.token);
 
-    console.log("SESSION", this.session);
-    const currUser = await User.findById(this.session.qid);
-    if (!currUser) {
-      return this.socket.emit("notLoggedIn");
-    }
-    currUser.socket = this.socket.id ?? "";
-    await currUser.save();
-    return this.socket.emit("success");
+    (decodedToken as any).socketID = socket.id;
+    (socket as SocketWithData).data.decodedToken =
+      decodedToken as SocketWithData["data"]["decodedToken"];
   }
 
-  public async sendMessage(roomId: string, message: string) {
-    if (!this.session.qid) {
-      return this.socket.emit("notLoggedIn");
-    }
+  async function sendMessage(roomId: string, message: string) {
     const room = await Room.findById(roomId);
-    if (!room) return this.socket.emit("roomNotFound");
+    if (!room) return socket.emit("room:NotFound");
     const newMessage = {
-      sender: new ObjectID(this.session.qid),
+      sender: new ObjectID(socket.data.decodedToken.id),
       message,
       createdAt: new Date(),
     };
     room.chat = room.chat?.concat(newMessage);
     await room.save();
-    return this.io.sockets
-      .in(room.name)
-      .emit("user:incomingMessage", newMessage);
+    return io.sockets.in(room.name).emit("chat:incomingMessage", newMessage);
   }
-}
 
-export default UserEvents;
+  socket.on("chat:initiate", initiateChatRoom);
+  socket.on("chat:sendMessage", sendMessage);
+  socket.on("auth:registerUserSocket", registerUserSocket);
+};

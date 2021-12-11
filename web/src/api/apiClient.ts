@@ -2,9 +2,11 @@ import axios from "axios";
 import { userActions } from "../common/redux/reducers/user";
 import { store } from "../common/redux/store";
 
-const API_URL = `${
-  process.env.REACT_APP_PROD_API_URL ?? process.env.REACT_APP_BACKEND_URL
-}/api`;
+let base =
+  process.env.REACT_APP_PROD_API_URL ??
+  process.env.REACT_APP_BACKEND_IP_URL ??
+  process.env.REACT_APP_BACKEND_URL;
+const API_URL = `${base}/api`;
 
 const apiClient = axios.create({
   baseURL: API_URL,

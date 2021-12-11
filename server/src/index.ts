@@ -1,23 +1,25 @@
+import jwt from "jsonwebtoken";
 import MongoStore from "connect-mongo";
 import cors from "cors";
+import dotenv from "dotenv";
 import express from "express";
 import expressSession from "express-session";
-import sharedSession from "express-socket.io-session";
 import http from "http";
 import mongoose from "mongoose";
 import logger from "morgan";
+import path from "path";
 import { Server, Socket } from "socket.io";
-import UserEvents from "./events/User";
+import { userEvents } from "./events/User";
 import "./models/Friend";
 import notificationRoutes from "./routes/notificationRoutes";
 import userRoutes from "./routes/userRoutes";
-import { EventClassConstructor } from "./types";
-import dotenv from "dotenv";
-import path from "path";
+import { SocketWithData } from "./types";
+import { getIPv4Address } from "./utils";
 
 dotenv.config({ path: path.join(__dirname, "../.env") });
 
-const MONGODB_URL = "mongodb://localhost:27017/better-chat-app";
+const MONGODB_URL = process.env.MONGO_DB_URL ?? "";
+
 mongoose.connect(MONGODB_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -41,7 +43,7 @@ const session = expressSession({
   store: sessionStore,
 });
 
-const whitelist = ["http://localhost:3000"];
+const whitelist = ["http://localhost:3000", `http://${getIPv4Address()}:3000`];
 
 const corsConfig: cors.CorsOptions = {
   origin: function (origin, callback) {
@@ -77,28 +79,30 @@ const server = http.createServer(app);
 
 const io = new Server(server, { cors: corsConfig });
 
-// Attaching io to express app
 app.io = io;
-app.sessionQIDtoSocketMap = {};
-io.use(sharedSession(session, { autoSave: true }));
-// io.use(socketIoLogger());
-io.on("connection", (socket: Socket) => {
-  // console.log(socket.id, "connected");
-  // console.log("Socket Handshake: ", (socket.handshake as any).session.qid);
-  app.sessionQIDtoSocketMap[(socket.handshake as any).session.qid] = socket.id;
-  const eventClasses: Record<string, EventClassConstructor> = {
-    user: UserEvents,
+io.use((s, next) => {
+  const socket = s as SocketWithData;
+
+  const verifiedToken = jwt.verify(
+    socket.handshake.auth.token,
+    process.env.JWT_SECRET ?? ""
+  );
+
+  if (!verifiedToken) {
+    console.log("UNAUTHORIZED --------------------------------");
+    return socket.emit("auth:unauthorized");
+  }
+
+  (verifiedToken as any).socketID = socket.id;
+
+  (s as SocketWithData).data = {
+    decodedToken: verifiedToken as SocketWithData["data"]["decodedToken"],
   };
 
-  for (let eventClass in eventClasses) {
-    const eventClassInit = new eventClasses[eventClass](socket, app, io);
-    const events = eventClassInit.events;
-    for (let event in events) {
-      const finalEventName = `${eventClassInit.name}:${event}`;
-      console.log(finalEventName);
-      socket.on(finalEventName, events[event]);
-    }
-  }
+  return next();
+});
+io.on("connection", (socket: Socket) => {
+  userEvents(io, socket as any);
 });
 
 const PORT = process.env.PORT || 4000;
