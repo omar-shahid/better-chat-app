@@ -15,7 +15,11 @@ export const UserRoute: React.FC<Props> = ({ element, ...rest }) => {
   return (
     <Route
       element={
-        token ? element : <Navigate to={`/login?return-url=${rest.path}`} />
+        token ? (
+          element
+        ) : (
+          <Navigate to={`/login?return-url=${window.location.pathname}`} />
+        )
       }
       {...rest}
     />

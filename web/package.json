@@ -18,6 +18,7 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@types/react-linkify": "^1.0.0",
+    "@types/socket.io-client": "^3.0.0",
     "autoprefixer": "^9",
     "autosize": "^4.0.2",
     "axios": "^0.21.1",
