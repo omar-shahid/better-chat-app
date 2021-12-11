@@ -9,12 +9,13 @@ import mongoose from "mongoose";
 import logger from "morgan";
 import path from "path";
 import { Server, Socket } from "socket.io";
-import { userEvents } from "./events/User";
+import { chatEvents } from "./events/Chat";
 import "./models/Friend";
 import notificationRoutes from "./routes/notificationRoutes";
 import userRoutes from "./routes/userRoutes";
 import { SocketWithData } from "./types";
 import { getIPv4Address } from "./utils";
+import { authEvents } from "./events/Auth";
 
 dotenv.config({ path: path.join(__dirname, "../.env") });
 
@@ -102,7 +103,9 @@ io.use((s, next) => {
   return next();
 });
 io.on("connection", (socket: Socket) => {
-  userEvents(io, socket as any);
+  const s = socket as any;
+  chatEvents(io, s);
+  authEvents(io, s);
 });
 
 const PORT = process.env.PORT || 4000;

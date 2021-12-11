@@ -1,14 +1,10 @@
-import jwt from "jsonwebtoken";
 import { ObjectID } from "mongodb";
 import { Server } from "socket.io";
 import Room from "../models/Room";
 import { SocketWithData } from "../types";
 
-export const userEvents = (io: Server, socket: SocketWithData) => {
+export const chatEvents = (io: Server, socket: SocketWithData) => {
   async function initiateChatRoom(otherUserId: string) {
-    console.log(
-      "-------------------------------------------------- KFJSDKDFJDKF -------------------------------------------"
-    );
     const room = await Room.findOne({
       users: {
         $all: [
@@ -22,14 +18,6 @@ export const userEvents = (io: Server, socket: SocketWithData) => {
 
     socket.join(room.name);
     return io.to(socket.id).emit("room:IDSuccess", room.id);
-  }
-
-  async function registerUserSocket() {
-    const decodedToken = jwt.decode(socket.handshake.auth.token);
-
-    (decodedToken as any).socketID = socket.id;
-    (socket as SocketWithData).data.decodedToken =
-      decodedToken as SocketWithData["data"]["decodedToken"];
   }
 
   async function sendMessage(roomId: string, message: string) {
@@ -47,5 +35,4 @@ export const userEvents = (io: Server, socket: SocketWithData) => {
 
   socket.on("chat:initiate", initiateChatRoom);
   socket.on("chat:sendMessage", sendMessage);
-  socket.on("auth:registerUserSocket", registerUserSocket);
 };
