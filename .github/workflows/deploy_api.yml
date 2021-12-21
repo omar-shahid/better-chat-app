@@ -1,0 +1,25 @@
+name: Deploy API
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: akhileshns/heroku-deploy@v3.8.9 # This is the action
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_SECRET}}
+          heroku_app_name: "${{secrets.HEROKU_API_NAME}}" #Must be unique in Heroku
+          heroku_email: "${{secrets.EMAIL}}"
+          appdir: "server"
+          healthcheck: "https://${{secrets.HEROKU_API_NAME}}.herokuapp.com/health"
+          justlogin: true
+      - name: Adding Heroku
+        run: git remote add heroku https://git.heroku.com/${{secrets.HEROKU_API_NAME}}.git
+
+      - name: Deploy API to heroku
+        run: git push heroku master --force
