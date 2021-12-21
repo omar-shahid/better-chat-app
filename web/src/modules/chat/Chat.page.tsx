@@ -34,18 +34,16 @@ const ChatPage: React.FC = () => {
   const navigate = useNavigate();
   const { data } = useQuery("prevMessages", () => chatAPI.getPrevMessages(id));
 
+  const chat = useSelector((store: RootState) => store.chat[id] ?? []);
+
   const [messages, setMessages] = useState<Message[]>([]);
-  const [roomId, setRoomId] = useState("");
+  const [roomName, setRoomName] = useState("");
   const [emojiModalOpened, setEmojiModalOpened] = useState(false);
 
   useEffect(() => {
     if (!id) return navigate("/");
     console.log({ id });
     socket.emit("chat:initiate", id);
-    socket.on("room:IDSuccess", (id: string) => {
-      console.log("Room ID", id);
-      setRoomId(id);
-    });
     socket.on("room:notFound", (s: any) => {
       console.log("ROOM NOT FOUND", s);
     });
@@ -58,14 +56,11 @@ const ChatPage: React.FC = () => {
   });
 
   useEffect(() => {
-    if (data?.messages.length) setMessages(data.messages);
-  }, [data?.messages]);
-
-  useEffect(() => {
-    socket.on("chat:incomingMessage", (message: Message) => {
-      setMessages((p) => p.concat(message));
-    });
-  }, [user.profile.id]);
+    if (data?.messages.length) setMessages(data.messages.concat(chat));
+    else setMessages(chat);
+    if (data?.roomName && data?.roomName !== roomName)
+      setRoomName(data.roomName);
+  }, [data, roomName]);
 
   useEffect(() => {
     dispatch(settingsActions.setDarkBg(true));
@@ -84,12 +79,7 @@ const ChatPage: React.FC = () => {
           <div className="container mx-auto">
             {messages.map((msg) => (
               <Fragment key={msg.createdAt}>
-                {console.log(
-                  user.profile.id === msg.sender,
-                  user.profile.id,
-                  msg.sender
-                )}
-                {user.profile.id === msg.sender ? (
+                {user.profile.id === msg.sender.id ? (
                   <React.Fragment key={msg.createdAt}>
                     <div
                       className="p-6 mb-2 ml-auto text-white break-all bg-gray-900 rounded-lg message bg-opacity-80"
@@ -117,9 +107,20 @@ const ChatPage: React.FC = () => {
           }}
           onSubmit={(values, helpers) => {
             if (!values.message.trim()) return;
-            socket
-              .emit("chat:sendMessage", roomId, values.message)
-              .emit("user:greet", (msg: string) => console.log(msg));
+            socket.emit("chat:sendMessage", roomName, values.message);
+
+            setMessages((p) => [
+              ...p,
+              {
+                createdAt: new Date().toISOString(),
+                message: values.message,
+                sender: {
+                  id: user.profile.id,
+                  name: user.profile.name,
+                },
+                roomName: roomName,
+              },
+            ]);
 
             helpers.resetForm();
           }}

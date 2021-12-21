@@ -53,7 +53,9 @@ const LoginPage: React.FC<Props> = () => {
               login
                 .mutateAsync(values)
                 .then(({ profile }) => {
-                  socket.emit("auth:registerUserSocket");
+                  socket.emit("auth:registerUserSocket", (token: string) => {
+                    dispatch(userActions.logIn({ token }));
+                  });
                   dispatch(
                     userActions.setUserProfile({
                       name: profile.name,

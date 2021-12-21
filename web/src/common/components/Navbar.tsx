@@ -1,15 +1,14 @@
 import { Transition } from "@headlessui/react";
 import cl from "classnames";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useMutation, useQuery } from "react-query";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../api";
-import { RootState, useAppDispatch } from "../redux/store";
-import { socket } from "../lib/socket";
-import { Notification } from "../../types";
-import { userActions } from "../redux/reducers/user";
 import logoImg from "../../assets/images/logo.svg";
+import { notificationActions } from "../redux/reducers/notifications";
+import { userActions } from "../redux/reducers/user";
+import { RootState, useAppDispatch } from "../redux/store";
 
 interface Props {}
 
@@ -59,22 +58,21 @@ const Navbar: React.FC<Props> = () => {
     "notifications",
     api.notifications.getAllNotifications
   );
-  const [notifications, setNotifications] = useState<Notification[]>(
-    data?.notifications ?? []
-  );
 
-  useEffect(() => {
-    socket.on("notification:new", (notification: Notification) => {
-      console.log("notification: ", notification);
-      setNotifications((p) => [notification, ...p]);
-      setNewNotificationCame(true);
-      notificationAudio.play();
-    });
-  }, [notificationAudio]);
+  // useEffect(() => {
+  //   socket.on("notification:new", (notification: Notification) => {
+  //     console.log("notification: ", notification);
+  //     // setNotifications((p) => [notification, ...p]);
+  //     setNewNotificationCame(true);
+  //     notificationAudio.play();
+  //   });
+  // }, [notificationAudio]);
 
-  useEffect(() => {
-    if (data?.notifications) setNotifications(data?.notifications);
-  }, [data]);
+  const notifications = useSelector((store: RootState) => store.notifications);
+
+  // useEffect(() => {
+  //   if (data?.notifications) setNotifications(data?.notifications);
+  // }, [data]);
 
   const mainNav = useMemo(
     () => [
@@ -92,6 +90,7 @@ const Navbar: React.FC<Props> = () => {
     ],
     []
   );
+
   let sideNav = (
     <div className="items-center hidden ml-4 md:ml-6 md:flex ">
       <div className={cl("relative ml-3 ")}>
@@ -103,14 +102,22 @@ const Navbar: React.FC<Props> = () => {
             }}
             className="p-1 text-gray-400 bg-gray-800 rounded-full hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
           >
+            {!!notifications.length && (
+              <span
+                id="number"
+                className="absolute border-solid border-2 border-white bg-green-400 text-white w-5 h-5 rounded-full leading-4 text-xs font-bold top-0 right-0"
+              >
+                {notifications.length}
+              </span>
+            )}
             <span className="sr-only">View notifications</span>
             {/* Heroicon name: outline/bell */}
             <svg
               className="w-6 h-6"
               xmlns="http://www.w3.org/2000/svg"
-              fill={newNotificationCame ? "#10B981" : "none"}
+              fill={notifications.length ? "white" : "none"}
               viewBox="0 0 24 24"
-              stroke={newNotificationCame ? "#10B981" : "currentColor"}
+              stroke={notifications.length ? "white" : "currentColor"}
               aria-hidden="true"
             >
               <path
@@ -128,35 +135,43 @@ const Navbar: React.FC<Props> = () => {
           enterFrom="transform opacity-0 scale-95"
           leave="transition ease-in duration-75"
           leaveFrom="transform opacity-100 scale-100"
-          leaveTo="transform opacity-0 scale-95"
+          leaveTo="transform opacity-1 scale-95"
         >
           <div
-            className="absolute right-0 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg h-96 w-80 ring-1 ring-black ring-opacity-5 focus:outline-none"
+            className="absolute z-10 right-0 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg h-96 w-80 ring-1 ring-black ring-opacity-5 focus:outline-none"
             role="menu"
             aria-orientation="vertical"
             aria-labelledby="user-menu"
           >
             {notifications.map((notification) => {
-              if (notification.details.type === "RequestAccepted")
-                socket.emit("user:initiateChat", notification.users[0]);
               return (
                 <AppLink
-                  key={notification._id}
-                  // to={
-                  // }
-                  // onClick={() => setIsOpen(false)}
-                  className="block px-4 py-4 text-sm text-gray-700 border-b border-gray-300 hover:bg-gray-100"
+                  key={notification.id}
+                  className={cl(
+                    "block px-4 py-4 text-sm text-gray-700 border",
+                    {
+                      "border-gray-300 hover:bg-gray-100": [
+                        notification.isRead,
+                      ],
+                    },
+                    {
+                      "border-gray-300 bg-gray-300 hover:bg-gray-500": [
+                        !notification.isRead,
+                      ],
+                    }
+                  )}
                   role="menuitem"
                   links={{
-                    url:
-                      notification.details.type === "RequestSent"
-                        ? `/requests`
-                        : notification.details.type === "RequestAccepted"
-                        ? "/friends"
-                        : "/",
                     name: notification.message,
+                    url: notification.link,
                   }}
-                  openFn={() => setIsNotificationOpen(false)}
+                  openFn={() =>
+                    dispatch(
+                      notificationActions.toggleNotificationRead(
+                        notification.id
+                      )
+                    )
+                  }
                 />
               );
             })}
@@ -191,7 +206,7 @@ const Navbar: React.FC<Props> = () => {
           leaveTo="transform opacity-0 scale-95"
         >
           <div
-            className="absolute right-0 w-48 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+            className="absolute z-10 right-0 w-48 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
             role="menu"
             aria-orientation="vertical"
             aria-labelledby="user-menu"

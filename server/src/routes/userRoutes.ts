@@ -2,23 +2,22 @@ import express from "express";
 import UserController from "../controllers/UserController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 
-const router = express.Router();
+export const userRoutes = express.Router();
+const userController = new UserController();
 
-router.post("/register", UserController.register);
-router.post("/login", UserController.login);
+userRoutes.post("/register", userController.register);
+userRoutes.post("/login", userController.login);
 
 // Authorized Routes
-router.use(isAuthenticated);
-router.get("/profile", UserController.profile);
-router.get("/rooms", UserController.rooms);
-router.get("/friends/find", UserController.findFriends);
-router.post("/logout", UserController.logout);
-router.post("/requests/send", UserController.sendFriendRequest);
-router.post("/requests/accept", UserController.acceptRequest);
-router.post("/requests/reject", UserController.rejectRequest);
-router.post("/requests/delete", UserController.deleteRequest);
-router.get("/requests/list", UserController.listFriendRequests);
-router.get("/friends", UserController.listFriends);
-router.post("/messages/prev", UserController.getPreviousMessages);
-
-export default router;
+userRoutes.use(isAuthenticated);
+userRoutes.get("/profile", userController.profile);
+userRoutes.get("/rooms", userController.rooms);
+userRoutes.get("/friends/find", userController.findFriends);
+userRoutes.post("/logout", userController.logout);
+userRoutes.post("/requests/send", userController.sendFriendRequest);
+userRoutes.post("/requests/accept", userController.acceptRequest);
+userRoutes.post("/requests/reject", userController.rejectRequest);
+userRoutes.post("/requests/delete", userController.deleteRequest);
+userRoutes.get("/requests/list", userController.listFriendRequests);
+userRoutes.get("/friends", userController.listFriends);
+userRoutes.post("/messages/prev", userController.getPreviousMessages);

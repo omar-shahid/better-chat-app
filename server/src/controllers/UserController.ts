@@ -2,6 +2,7 @@ import argon2 from "argon2";
 import { Response } from "express";
 import { ObjectID, ObjectId } from "mongodb";
 import { v4 } from "uuid";
+import { io } from "..";
 import Friend, { FriendClass } from "../models/Friend";
 import Notification from "../models/Notification";
 import Request from "../models/Request";
@@ -19,7 +20,7 @@ import {
 } from "../validators/registerInputValidator";
 
 // const sessionQIDsocketMap: Record<string, string> = {}
-class UserController {
+export default class UserController {
   public async register(req: ExpressRequest<registerInputType>, res: Response) {
     const input = req.body;
     if (!input) return res.status(400).json({ errors: ["Provide input"] });
@@ -43,7 +44,6 @@ class UserController {
       else if (e.code === 11000)
         return res.status(409).json({ errors: ["Email already exists."] });
       else {
-        console.log(e);
         return res.status(500).json({ errors: ["Internal Server Error"] });
       }
     }
@@ -54,10 +54,9 @@ class UserController {
     try {
       await loginInputValidator.validate(input, { abortEarly: false });
       const user = await User.findOne({ email: input.email });
-      if (!user)
-        return res.status(422).json({ errors: ["Invalid email or password"] });
+      if (!user) return res.status(422).json({ errors: ["Invalid email"] });
       if (!(await argon2.verify(user.password, input.password)))
-        return res.status(422).json({ errors: ["Invalid email or password"] });
+        return res.status(422).json({ errors: ["Invalid password"] });
       const token = createToken({ id: user.id });
       return res.json({
         success: true,
@@ -77,9 +76,12 @@ class UserController {
 
   public async profile(req: ExpressRequest, res: Response) {
     const userId = req.decodedToken.id;
-
     const user = await User.findById(userId).select(
       "-rooms -password -requests -friends -socket"
+    );
+    io.to(req.decodedToken.socketID).emit(
+      "greet",
+      "This event is only for you " + user?.name
     );
     res.json({ profile: user });
   }
@@ -98,11 +100,24 @@ class UserController {
       .populate("friends", "users")
       .populate("request");
 
+    // FIND PEOPLE WHO RECEIVED REQUEST OR THIS USER SENT REQUEST TO THEM
+    const requestedUsers = (
+      await Request.find({
+        senderId: currUser?.id,
+      })
+    ).map((d) => d.recieverId);
+    const userRequests = [
+      ...(await Request.find({
+        recieverId: currUser?.id,
+      })),
+    ].map((d) => d.senderId);
+
     const usersToBeExcluded = (
-      currUser?.friends?.map((friend) =>
-        (friend as FriendClass).users.map((d) => d)
-      ) ?? []
-    ).concat(currUser?.id); // In case user got no friends and DB filter won't have user id
+      currUser?.friends?.map((friend) => (friend as FriendClass).users) ?? []
+    )
+      .concat(requestedUsers)
+      .concat(userRequests)
+      .concat(currUser?.id); // In case user got no friends and DB filter won't have user id
 
     const users = await User.find({
       _id: { $nin: usersToBeExcluded?.flat() },
@@ -136,6 +151,14 @@ class UserController {
     if (isRequestExists)
       return res.status(409).json({ errors: ["Request Already sent."] });
 
+    const isRequestReceived = await Request.findOne({
+      senderId: secondUser?.id,
+      recieverId: currUser?.id,
+    });
+
+    if (isRequestReceived)
+      return res.status(409).json({ errors: ["Request Already received."] });
+
     const newRequest = new Request({
       senderId: currUser?.id,
       recieverId: secondUser?.id,
@@ -149,17 +172,12 @@ class UserController {
     await secondUser.save();
 
     const notification = new Notification();
-    notification.users = [secondUser.id];
-    notification.details = {
-      type: "RequestSent",
-      userInteracted: currUser.id,
-    };
+    notification.to = secondUser.id;
     notification.message = `${currUser.name} has sent you a friend request`;
+    notification.link = `/requests`;
 
     await notification.save();
-    req.app.io
-      .to(secondUser.socket ?? "")
-      .emit("notification:new", notification);
+    io.to(secondUser.id ?? "").emit("notification:new", notification);
 
     return res.json({ success: true });
   }
@@ -173,7 +191,6 @@ class UserController {
         User.findById(request.recieverId).select("name")
       )
     );
-    console.log(sentRequestUsers);
 
     const recievedRequests = await Request.find({
       recieverId: new ObjectId(req.decodedToken.id),
@@ -242,17 +259,12 @@ class UserController {
     await requestObj.remove();
 
     const notification = new Notification();
-    notification.users = [secondUser.id];
-    notification.details = {
-      type: "RequestAccepted",
-      userInteracted: currUser.id,
-    };
+    notification.to = secondUser.id;
     notification.message = `${currUser.name} has accepted your request!`;
+    notification.link = `/chat/${currUser.id}`;
 
     await notification.save();
-    req.app.io
-      .to(secondUser.socket ?? "")
-      .emit("notification:new", notification);
+    io.to(secondUser.id).emit("notification:new", notification);
 
     return res.json({ success: true });
   }
@@ -274,7 +286,6 @@ class UserController {
     const friendsData = await Promise.all(
       friendsArr.map((friend) => User.findById(friend).select("name"))
     );
-    console.log(friendsArr);
     res.json(friendsData);
   }
 
@@ -292,8 +303,15 @@ class UserController {
         ],
       },
     });
+    const d = room?.chat?.reverse()?.map((chat) => {
+      const obj: any = { ...chat };
+      obj.sender = {
+        id: chat.sender,
+      };
+      return obj;
+    });
     if (!room) return res.status(401).json({ error: ["UnAuthorized"] });
-    return res.json({ messages: room.chat });
+    return res.json({ messages: d, roomName: room.name });
   }
 
   public async deleteRequest(
@@ -321,12 +339,20 @@ class UserController {
       recieverId: req.decodedToken.id,
       senderId: req.body.id,
     });
+    const currUser = await User.findById(req.body.id);
     if (!request) {
       return res.json({ error: ["request not found"] });
     }
     await request.remove();
+    const notification = new Notification();
+    notification.to = new ObjectId(req.body.id);
+    notification.message = `${currUser?.name} has declined your request`;
+    notification.link = "/friends/find";
+    notification.isRead = false;
+
+    await notification.save();
+
+    io.to(req.body.id).emit("notification:new", notification);
     return res.json({ success: true });
   }
 }
-
-export default new UserController();

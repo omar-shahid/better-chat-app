@@ -27,8 +27,12 @@ export type BasicUserInfo = {
 
 export type Message = {
   message: string;
-  sender: string;
   createdAt: string;
+  roomName: string;
+  sender: {
+    id: string;
+    name: string;
+  };
 };
 
 export interface Notification {

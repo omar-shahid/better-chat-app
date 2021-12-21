@@ -18,3 +18,4 @@ export const getIPv4Address = () => {
 
   return results.WiFi[0];
 };
+console.log(getIPv4Address());

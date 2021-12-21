@@ -1,20 +1,21 @@
 import { getModelForClass, prop, Ref } from "@typegoose/typegoose";
 import { UserClass } from "./User";
 
-class NotificationDetail {
-  @prop({ required: true })
-  type!: string;
-
-  @prop({ required: true, ref: () => UserClass })
-  userInteracted!: Ref<UserClass>;
+export enum NotificationType {
+  RequestReceived = "REQUEST_RECIEVED",
+  RequestAccepted = "REQUEST_ACCEPTED",
+  RequestDeclined = "REQUEST_DECLINED",
 }
 
 export class NotificationClass {
   @prop({ ref: () => UserClass })
-  users!: Ref<UserClass>[];
+  to!: Ref<UserClass>;
+
+  @prop({ required: true, default: false })
+  isRead: boolean;
 
   @prop({ required: true })
-  details: NotificationDetail;
+  link: string;
 
   @prop({ required: true })
   message!: string;

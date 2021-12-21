@@ -65,7 +65,7 @@ const FriendRequestsPage: React.FC<Props> = () => {
                         <button
                           onClick={() =>
                             api.friends
-                              .rejectRequest(user._id as string)
+                              .deleteRequest(user._id as string)
                               .then(() => {
                                 queryClient.invalidateQueries("requests");
                               })

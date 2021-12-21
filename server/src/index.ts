@@ -12,8 +12,8 @@ import { Server, Socket } from "socket.io";
 import { chatEvents } from "./events/Chat";
 import "./models/Friend";
 import notificationRoutes from "./routes/notificationRoutes";
-import userRoutes from "./routes/userRoutes";
-import { SocketWithData } from "./types";
+import { userRoutes } from "./routes/userRoutes";
+import { DecodedToken, SocketWithData } from "./types";
 import { getIPv4Address } from "./utils";
 import { authEvents } from "./events/Auth";
 
@@ -67,18 +67,18 @@ app.get("/", (_, res) => {
   res.send("Working");
 });
 
+const server = http.createServer(app);
+
+export const io = new Server(server, { cors: corsConfig });
+
 app.use("/api/user", userRoutes);
 app.use("/api/notifications", notificationRoutes);
-
-const server = http.createServer(app);
 
 /**
  *
  * SOCKET IMPLEMENTATION
  *
  */
-
-const io = new Server(server, { cors: corsConfig });
 
 app.io = io;
 io.use((s, next) => {
@@ -87,7 +87,7 @@ io.use((s, next) => {
   const verifiedToken = jwt.verify(
     socket.handshake.auth.token,
     process.env.JWT_SECRET ?? ""
-  );
+  ) as DecodedToken;
 
   if (!verifiedToken) {
     console.log("UNAUTHORIZED --------------------------------");
@@ -99,6 +99,8 @@ io.use((s, next) => {
   (s as SocketWithData).data = {
     decodedToken: verifiedToken as SocketWithData["data"]["decodedToken"],
   };
+  console.log("Joining", verifiedToken.id);
+  socket.join(verifiedToken.id);
 
   return next();
 });

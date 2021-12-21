@@ -4,7 +4,10 @@ import jwt from "jsonwebtoken";
 
 export const authEvents = (_: Server, socket: SocketWithData) => {
   async function registerUserSocket() {
-    const decodedToken = jwt.decode(socket.handshake.auth.token);
+    const decodedToken = jwt.decode(
+      socket.handshake.auth.token
+    ) as SocketWithData["data"]["decodedToken"];
+    if (!decodedToken) return;
 
     (decodedToken as any).socketID = socket.id;
     (socket as SocketWithData).data.decodedToken =

@@ -1,7 +1,7 @@
 import cl from "classnames";
 import React, { useEffect } from "react";
 import { useQuery } from "react-query";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { api } from "../api";
 import Navbar from "../common/components/Navbar";
@@ -12,6 +12,9 @@ import { Message } from "../types";
 import { PublicRoute } from "./PublicRoute";
 import { UserRoute } from "./UserRoute";
 import { allRoutes } from "./allRoutes";
+import { chatActions } from "../common/redux/reducers/chat";
+import { notificationActions } from "../common/redux/reducers/notifications";
+import { userActions } from "../common/redux/reducers/user";
 
 const chatAudioURL = "/audio/notify.mp3";
 
@@ -20,25 +23,47 @@ chatAudio.crossOrigin = "anonymous";
 
 const WebRoutes: React.FC = () => {
   const user = useSelector((store: RootState) => store.user);
+  const dispatch = useDispatch();
   const settings = useSelector((store: RootState) => store.settings);
-  const { refetch } = useQuery("friends", api.friends.listFriends, {
-    enabled: false,
-  }); //
-  useEffect(() => {
-    if (user.token)
-      refetch().then((data) =>
-        data?.data?.forEach((friend) => {
-          socket.emit("user:initiateChat", friend._id);
-        })
-      );
-  }, [refetch, user.token]);
 
   useEffect(() => {
-    socket.on("user:incomingMessage", (message: Message) => {
-      if (message.sender !== user.profile.id)
-        chatAudio.play().catch((e) => console.log("Audio Error", e));
+    const audio = new Audio("/audio/notification2.ogg");
+    socket.emit("chat:registerAllRooms");
+
+    socket.on("chat:incomingMessage", (message: Message) => {
+      // setMessages((p) => p.concat(message));
+      dispatch(chatActions.addMessage({ roomName: message.roomName, message }));
+      // dispatch(
+      //   notificationActions.addNotification({
+      //     id: new Date().toISOString(),
+      //     type: "MessageReceived",
+      //     data: {
+      //       id: message.sender.id,
+      //       message: message.message,
+      //       name: message.sender.name,
+      //     },
+      //   })
+      // );
     });
-  }, [user]);
+
+    socket.on("greet", (e: any) => {
+      console.log("EVENT", e);
+    });
+
+    socket.on("room:IDSuccess", (id: string) => {
+      dispatch(chatActions.addRoom(id));
+      console.log("Room ID", id);
+    });
+
+    socket.emit("auth:registerUserSocket", (token: string) => {
+      dispatch(userActions.logIn({ token }));
+    });
+    socket.on("notification:new", (s: any) => {
+      audio.play();
+      console.log("NOTIFFFF", s);
+      dispatch(notificationActions.addNotification(s));
+    });
+  }, [dispatch]);
 
   return (
     <div className={cl("h-screen", { "bg-gray-900": settings.isDarkbg })}>
