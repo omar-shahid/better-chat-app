@@ -9,7 +9,7 @@ describe("server.routes.version", function () {
 
   beforeEach(function (done) {
     app = express();
-    app.use("/register", UserController.register);
+    app.use("/register", new UserController().register);
     done();
   });
 

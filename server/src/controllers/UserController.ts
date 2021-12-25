@@ -1,6 +1,7 @@
 import argon2 from "argon2";
 import { Response } from "express";
-import { ObjectID, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
+import { Types } from "mongoose";
 import { v4 } from "uuid";
 import { io } from "..";
 import Friend, { FriendClass } from "../models/Friend";
@@ -298,8 +299,8 @@ export default class UserController {
     const room = await Room.findOne({
       users: {
         $all: [
-          new ObjectID(req.decodedToken.id),
-          new ObjectID(req.body.friendUserId),
+          new Types.ObjectId(req.decodedToken.id),
+          new Types.ObjectId(req.body.friendUserId),
         ],
       },
     });
@@ -345,7 +346,7 @@ export default class UserController {
     }
     await request.remove();
     const notification = new Notification();
-    notification.to = new ObjectId(req.body.id);
+    notification.to = new Types.ObjectId(req.body.id);
     notification.message = `${currUser?.name} has declined your request`;
     notification.link = "/friends/find";
     notification.isRead = false;

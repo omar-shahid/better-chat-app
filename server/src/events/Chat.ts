@@ -1,4 +1,4 @@
-import { ObjectID } from "mongodb";
+import mongoose from "mongoose";
 import { Server } from "socket.io";
 import { FriendClass } from "../models/Friend";
 import Room from "../models/Room";
@@ -10,8 +10,8 @@ export const chatEvents = (io: Server, socket: SocketWithData) => {
     const room = await Room.findOne({
       users: {
         $all: [
-          new ObjectID(socket.data.decodedToken.id),
-          new ObjectID(otherUserId),
+          new mongoose.Types.ObjectId(socket.data.decodedToken.id),
+          new mongoose.Types.ObjectId(otherUserId),
         ],
       },
     });
@@ -26,11 +26,11 @@ export const chatEvents = (io: Server, socket: SocketWithData) => {
     const room = await Room.findOne({ name: roomName });
     if (!room) return socket.emit("room:NotFound");
     const newMessage = {
-      sender: new ObjectID(socket.data.decodedToken.id),
+      sender: new mongoose.Types.ObjectId(socket.data.decodedToken.id),
       message,
       createdAt: new Date(),
     };
-    room.chat = room.chat?.concat(newMessage);
+    room.chat = room.chat?.concat([newMessage]);
     const user = await User.findById(newMessage.sender);
 
     await room.save();

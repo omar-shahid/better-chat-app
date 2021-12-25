@@ -1,30 +1,27 @@
-import jwt from "jsonwebtoken";
 import MongoStore from "connect-mongo";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import expressSession from "express-session";
 import http from "http";
+import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import logger from "morgan";
 import path from "path";
 import { Server, Socket } from "socket.io";
+import { authEvents } from "./events/Auth";
 import { chatEvents } from "./events/Chat";
 import "./models/Friend";
 import notificationRoutes from "./routes/notificationRoutes";
 import { userRoutes } from "./routes/userRoutes";
 import { DecodedToken, SocketWithData } from "./types";
 import { getIPv4Address } from "./utils";
-import { authEvents } from "./events/Auth";
 
 dotenv.config({ path: path.join(__dirname, "../.env") });
 
 const MONGODB_URL = process.env.MONGO_DB_URL ?? "";
 
-mongoose.connect(MONGODB_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect(MONGODB_URL);
 
 export const sessionStore = MongoStore.create({
   mongoUrl: MONGODB_URL,

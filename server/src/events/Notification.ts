@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
 
-export const NotificationEvents = (io: Server, socket: Socket) => {
-  function pushNotification() {}
+export const NotificationEvents = (_: Server, __: Socket) => {
+  // function pushNotification() {}
 };
