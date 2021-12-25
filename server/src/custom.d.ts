@@ -5,6 +5,7 @@ declare global {
   namespace NodeJS {
     export interface ProcessEnv {
       JWT_SECRET: string;
+      REACT_APP_URL: string;
     }
   }
   module Express {

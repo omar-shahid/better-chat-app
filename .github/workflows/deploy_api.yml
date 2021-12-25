@@ -22,4 +22,4 @@ jobs:
         run: git remote add heroku https://git.heroku.com/${{secrets.HEROKU_API_NAME}}.git
 
       - name: Deploy API to heroku
-        run: git push heroku master --force
+        run: git push heroku `git subtree split --prefix server`:master --force

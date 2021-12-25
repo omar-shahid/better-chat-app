@@ -15,7 +15,6 @@ import "./models/Friend";
 import notificationRoutes from "./routes/notificationRoutes";
 import { userRoutes } from "./routes/userRoutes";
 import { DecodedToken, SocketWithData } from "./types";
-import { getIPv4Address } from "./utils";
 
 dotenv.config({ path: path.join(__dirname, "../.env") });
 
@@ -41,7 +40,7 @@ const session = expressSession({
   store: sessionStore,
 });
 
-const whitelist = ["http://localhost:3000", `http://${getIPv4Address()}:3000`];
+const whitelist = ["http://localhost:3000", process.env.REACT_APP_URL];
 
 const corsConfig: cors.CorsOptions = {
   origin: function (origin, callback) {
